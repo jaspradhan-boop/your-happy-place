@@ -102,21 +102,22 @@ function ProjectDetail() {
         </div>
 
         {/* Tabs */}
-        <div className="mt-6 flex items-center gap-1 border-b border-border">
+        <div className="mt-6 flex items-center gap-1 overflow-x-auto border-b border-border scrollbar-thin">
           {["Kanban", "Timeline", "Files", "Discussion", "Activity"].map((t, i) => (
-            <button key={t} className={`relative px-3 py-2 text-xs font-medium transition ${i === 0 ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+            <button key={t} className={`relative shrink-0 px-3 py-2 text-xs font-medium transition ${i === 0 ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
               {t}
               {i === 0 && <span className="absolute inset-x-3 -bottom-px h-0.5 bg-primary" />}
             </button>
           ))}
         </div>
 
-        {/* Kanban */}
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+        {/* Kanban — horizontal scroll on mobile, grid on xl */}
+        <div className="mt-4 -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 scrollbar-thin sm:mx-0 sm:px-0 xl:grid xl:grid-cols-5 xl:overflow-visible">
           {TASK_STATUSES.map((status) => {
             const columnTasks = tasks.filter(t => t.status === status);
             return (
-              <div key={status} className="flex min-h-[400px] flex-col rounded-lg border border-border bg-background/30">
+              <div key={status} className="flex min-h-[400px] w-[85%] shrink-0 snap-start flex-col rounded-lg border border-border bg-background/30 sm:w-72 xl:w-auto">
+
                 <div className="flex items-center justify-between border-b border-border px-3 py-2">
                   <div className="flex items-center gap-2">
                     <span className="size-2 rounded-full" style={{ backgroundColor: taskStatusColor(status) }} />
