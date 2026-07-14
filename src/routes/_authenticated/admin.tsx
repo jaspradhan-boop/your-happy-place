@@ -1,10 +1,13 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui-bits";
 import { Loader2, ShieldCheck, Check, X, Trash2, LogOut, UserCog } from "lucide-react";
 import { toast } from "sonner";
+import { deleteUserCompletely } from "@/lib/admin.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -32,6 +35,8 @@ type UserRole = { user_id: string; role: "admin" | "member" };
 function AdminPage() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
+  const deleteUserFn = useServerFn(deleteUserCompletely);
+
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,12 +82,16 @@ function AdminPage() {
 
   async function deleteProfile(id: string) {
     if (id === user.id) return toast.error("You cannot delete your own account here.");
-    if (!confirm("Delete this user's profile, roles, and all their entries?")) return;
-    const { error } = await supabase.from("profiles").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Profile deleted (auth user still exists; ask support to fully purge)");
-    load();
+    if (!confirm("Permanently delete this user, their roles, and all their entries? This cannot be undone.")) return;
+    try {
+      await deleteUserFn({ data: { userId: id } });
+      toast.success("User deleted");
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to delete user");
+    }
   }
+
 
   async function handleSignOut() {
     await supabase.auth.signOut();
