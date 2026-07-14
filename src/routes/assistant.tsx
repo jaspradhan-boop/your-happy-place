@@ -1,0 +1,150 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { AppShell } from "@/components/app-shell";
+import { Card } from "@/components/ui-bits";
+import { useState } from "react";
+import { Sparkles, Send, Mic, Paperclip, FileText, TrendingUp, Bot, Search, ShieldAlert, Users, Lightbulb, Zap, User } from "lucide-react";
+
+export const Route = createFileRoute("/assistant")({
+  head: () => ({
+    meta: [
+      { title: "AI Assistant — IntelliTeam AI" },
+      { name: "description", content: "Natural language AI assistant for reports, forecasts, MOMs, risk analysis, and enterprise search." },
+    ],
+  }),
+  component: Assistant,
+});
+
+type Msg = { role: "user" | "ai"; text: string; card?: React.ReactNode };
+
+const suggestions = [
+  { icon: TrendingUp, title: "Forecast portfolio delivery", body: "Predict completion & risks for all active projects this quarter." },
+  { icon: FileText, title: "Draft weekly executive report", body: "Auto-generate with charts, KPIs, and root-cause analysis." },
+  { icon: ShieldAlert, title: "Identify at-risk items", body: "Scan tasks & projects for schedule, budget, and supply risks." },
+  { icon: Users, title: "Recommend resource plan", body: "Suggest reassignments to relieve burnout and hit deadlines." },
+  { icon: Search, title: "Find hardware alternatives", body: "Search vendors & datasheets for an approved alternate part." },
+  { icon: Lightbulb, title: "Summarize latest MOM", body: "Turn the last meeting into decisions, actions, owners, and dates." },
+];
+
+function Assistant() {
+  const [messages, setMessages] = useState<Msg[]>([
+    { role: "ai", text: "Hi Aarav — I've been reviewing your workspace. Ready when you are. Try one of the shortcuts below or ask me anything." },
+  ]);
+  const [input, setInput] = useState("");
+
+  function send(q: string) {
+    if (!q.trim()) return;
+    setMessages(prev => [
+      ...prev,
+      { role: "user", text: q },
+      {
+        role: "ai",
+        text: "Here's what I found across your workspace, cross-referenced with 12 documents, 4 meeting transcripts, and current vendor data.",
+        card: <ForecastCard />,
+      },
+    ]);
+    setInput("");
+  }
+
+  return (
+    <AppShell>
+      <div className="mx-auto flex h-full max-w-5xl flex-col p-6">
+        <div className="flex items-center gap-3 pb-4">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Sparkles className="size-5" />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">IntelliTeam AI Assistant</h1>
+            <p className="text-xs text-muted-foreground">Grounded in your projects, tasks, documents, and meetings. Multilingual, voice-ready, private.</p>
+          </div>
+          <div className="ml-auto flex items-center gap-2 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-[10px] font-medium text-success">
+            <span className="size-1.5 rounded-full bg-success" /> Connected · 128 sources indexed
+          </div>
+        </div>
+
+        <div className="flex-1 space-y-4 overflow-auto rounded-xl border border-border bg-card/40 p-6 scrollbar-thin">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
+              {m.role === "ai" && (
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary"><Sparkles className="size-4" /></div>
+              )}
+              <div className={`max-w-[75%] space-y-2 ${m.role === "user" ? "order-1" : ""}`}>
+                <div className={`rounded-2xl px-4 py-2.5 text-sm ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
+                  {m.text}
+                </div>
+                {m.card}
+              </div>
+              {m.role === "user" && (
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-foreground"><User className="size-4" /></div>
+              )}
+            </div>
+          ))}
+
+          {messages.length === 1 && (
+            <div className="pt-4">
+              <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Try one of these</div>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
+                {suggestions.map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <button key={s.title} onClick={() => send(s.title)} className="group flex flex-col gap-1 rounded-lg border border-border bg-background p-3 text-left transition hover:border-primary/40 hover:bg-accent/40">
+                      <div className="flex items-center gap-2">
+                        <Icon className="size-3.5 text-primary" />
+                        <span className="text-xs font-semibold">{s.title}</span>
+                      </div>
+                      <span className="text-[11px] text-muted-foreground">{s.body}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4">
+          <div className="rounded-xl border border-border bg-card focus-within:border-primary/50">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
+              rows={2}
+              placeholder="Ask anything — 'Forecast Helix SCADA', 'Draft an MOM from Tuesday's meeting', 'Find alternate to PMC71'…"
+              className="w-full resize-none bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none"
+            />
+            <div className="flex items-center justify-between border-t border-border px-3 py-2">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Paperclip className="size-3.5" /></button>
+                <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Mic className="size-3.5" /></button>
+                <button className="flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-[11px] hover:bg-accent"><Bot className="size-3" /> GPT-5 Enterprise</button>
+                <button className="flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-[11px] hover:bg-accent"><Zap className="size-3" /> Grounded</button>
+              </div>
+              <button onClick={() => send(input)} className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+                Send <Send className="size-3" />
+              </button>
+            </div>
+          </div>
+          <div className="mt-2 text-center text-[10px] text-muted-foreground">
+            Responses are grounded in your enterprise data. AI actions require role-based approval.
+          </div>
+        </div>
+      </div>
+    </AppShell>
+  );
+}
+
+function ForecastCard() {
+  return (
+    <Card className="overflow-hidden">
+      <div className="border-b border-border bg-primary/5 px-3 py-2">
+        <div className="flex items-center gap-2 text-[11px] font-semibold text-primary"><TrendingUp className="size-3" /> Portfolio forecast — Q3 2026</div>
+      </div>
+      <div className="grid grid-cols-3 divide-x divide-border text-center">
+        <div className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">On track</div><div className="mt-1 font-mono text-lg font-semibold text-success">3</div></div>
+        <div className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">Watch</div><div className="mt-1 font-mono text-lg font-semibold text-warning">1</div></div>
+        <div className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">At risk</div><div className="mt-1 font-mono text-lg font-semibold text-destructive">1</div></div>
+      </div>
+      <div className="border-t border-border p-3 text-xs text-muted-foreground">
+        <div><span className="text-foreground font-medium">Helix SCADA</span> is the primary concern — predicted 20-day slip driven by sensor lead time. Approved alternate identified: <span className="text-foreground">Endress+Hauser PMC71</span>. Reassigning Kenji to OPC UA sizing recovers ~4 days.</div>
+      </div>
+    </Card>
+  );
+}
