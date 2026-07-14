@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { channels, memberById, messages, members } from "@/lib/mock-data";
 import { useState } from "react";
-import { Hash, Lock, Search, Send, Sparkles, Plus, AtSign, Paperclip, Smile, Mic, Bot, Pin, Bell } from "lucide-react";
+import { Hash, Search, Send, Sparkles, Plus, AtSign, Paperclip, Smile, Mic, Bot, Pin, Bell, Menu, X } from "lucide-react";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
