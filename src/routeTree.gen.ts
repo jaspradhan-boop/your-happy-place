@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
 import { Route as ProjectsProjectIdRouteImport } from './routes/projects.$projectId'
 import { Route as AuthenticatedEntriesRouteImport } from './routes/_authenticated/entries'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
@@ -69,6 +70,11 @@ const AuthenticatedEntriesRoute = AuthenticatedEntriesRouteImport.update({
   path: '/entries',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/chat': typeof ChatRoute
   '/reports': typeof ReportsRoute
   '/team': typeof TeamRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/entries': typeof AuthenticatedEntriesRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/': typeof ProjectsIndexRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/chat': typeof ChatRoute
   '/reports': typeof ReportsRoute
   '/team': typeof TeamRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/entries': typeof AuthenticatedEntriesRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects': typeof ProjectsIndexRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/chat': typeof ChatRoute
   '/reports': typeof ReportsRoute
   '/team': typeof TeamRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/entries': typeof AuthenticatedEntriesRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/': typeof ProjectsIndexRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/reports'
     | '/team'
+    | '/admin'
     | '/entries'
     | '/projects/$projectId'
     | '/projects/'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/reports'
     | '/team'
+    | '/admin'
     | '/entries'
     | '/projects/$projectId'
     | '/projects'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/reports'
     | '/team'
+    | '/_authenticated/admin'
     | '/_authenticated/entries'
     | '/projects/$projectId'
     | '/projects/'
@@ -226,14 +238,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEntriesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedEntriesRoute: typeof AuthenticatedEntriesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedEntriesRoute: AuthenticatedEntriesRoute,
 }
 

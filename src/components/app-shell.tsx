@@ -1,10 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, FolderKanban, MessagesSquare, Sparkles, Users, BarChart3, Bell, Search, Command, Plus, Settings, CircleDot, ClipboardList } from "lucide-react";
-import type { ReactNode } from "react";
+import { LayoutDashboard, FolderKanban, MessagesSquare, Sparkles, Users, BarChart3, Bell, Search, Command, Plus, Settings, CircleDot, ClipboardList, ShieldCheck } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/entries", label: "Entries", icon: ClipboardList },
+  { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/chat", label: "Team Chat", icon: MessagesSquare, badge: 18 },
   { to: "/assistant", label: "AI Assistant", icon: Sparkles },
@@ -14,6 +16,20 @@ const nav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return;
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", userData.user.id);
+      if (!cancelled) setIsAdmin((data ?? []).some((r) => r.role === "admin"));
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
@@ -41,6 +57,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <nav className="mt-4 flex-1 space-y-0.5 px-2">
           <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Workspace</div>
           {nav.map((item) => {
+            if ("adminOnly" in item && item.adminOnly && !isAdmin) return null;
             const active = "exact" in item && item.exact ? pathname === item.to : pathname.startsWith(item.to) && item.to !== "/";
             const isDash = item.to === "/" && pathname === "/";
             const isActive = active || isDash;

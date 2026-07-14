@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui-bits";
-import { Plus, Loader2, Trash2, LogOut, FlaskConical, Rocket, ClipboardList, Sparkles } from "lucide-react";
+import { Plus, Loader2, Trash2, LogOut, FlaskConical, Rocket, ClipboardList, Sparkles, ShieldCheck, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/entries")({
@@ -23,6 +23,7 @@ type Status = "planned" | "in_progress" | "on_hold" | "completed" | "cancelled";
 
 interface Entry {
   id: string;
+  user_id: string;
   title: string;
   description: string | null;
   category: Category;
@@ -86,18 +87,18 @@ const emptyForm = {
 };
 
 function EntriesPage() {
+  const { user, isAdmin, status } = Route.useRouteContext();
   const navigate = useNavigate();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
-  const [userEmail, setUserEmail] = useState<string>("");
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? ""));
-    load();
-  }, []);
+    if (status === "approved") load();
+    else setLoading(false);
+  }, [status]);
 
   async function load() {
     setLoading(true);
@@ -119,14 +120,8 @@ function EntriesPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) {
-      toast.error("Not signed in");
-      setSaving(false);
-      return;
-    }
     const payload = {
-      user_id: userData.user.id,
+      user_id: user.id,
       title: form.title.trim(),
       description: form.description.trim() || null,
       category: form.category,
@@ -148,7 +143,7 @@ function EntriesPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("Entry saved to database");
+    toast.success("Entry saved");
     setForm(emptyForm);
     setShowForm(false);
     load();
@@ -168,6 +163,40 @@ function EntriesPage() {
     navigate({ to: "/auth" });
   }
 
+  if (status !== "approved") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-6">
+        <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-2xl">
+          {status === "pending" ? (
+            <>
+              <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-warning/15 text-warning">
+                <Clock className="size-6" />
+              </div>
+              <h1 className="mt-4 text-lg font-semibold">Awaiting admin approval</h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Thanks for signing up. Your account (<span className="text-foreground">{user.email}</span>) is pending approval.
+                An administrator must approve you before you can access the app.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-destructive/15 text-destructive">
+                <Trash2 className="size-6" />
+              </div>
+              <h1 className="mt-4 text-lg font-semibold">Access denied</h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Your account has been rejected. Contact your administrator if you think this is a mistake.
+              </p>
+            </>
+          )}
+          <button onClick={handleSignOut} className="mt-6 inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs hover:bg-accent">
+            <LogOut className="size-3.5" /> Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const rdCount = entries.filter((e) => e.category === "engineering_rd").length;
   const devCount = entries.filter((e) => e.category === "new_dev_test_improvement").length;
 
@@ -176,9 +205,17 @@ function EntriesPage() {
       <div className="mx-auto max-w-[1400px] p-6">
         <div className="flex flex-wrap items-end justify-between gap-4 pb-6">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Project Entries</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight">Project Entries</h1>
+              {isAdmin && (
+                <span className="inline-flex items-center gap-1 rounded bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                  <ShieldCheck className="size-3" /> Admin
+                </span>
+              )}
+            </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Signed in as <span className="text-foreground">{userEmail}</span> · {entries.length} entries · {rdCount} R&D · {devCount} Dev/Test/Improvement
+              Signed in as <span className="text-foreground">{user.email}</span> · {entries.length} entries · {rdCount} R&D · {devCount} Dev/Test/Improvement
+              {isAdmin && " · viewing ALL users' entries"}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -202,45 +239,25 @@ function EntriesPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <Field label="Category *">
-                  <select
-                    value={form.category}
-                    onChange={(e) => updateCategory(e.target.value as Category)}
-                    className={inputCls}
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
+                  <select value={form.category} onChange={(e) => updateCategory(e.target.value as Category)} className={inputCls}>
+                    {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </select>
                 </Field>
                 <Field label="Sub-type *">
-                  <select
-                    value={form.subtype}
-                    onChange={(e) => setForm({ ...form, subtype: e.target.value as Subtype })}
-                    className={inputCls}
-                  >
-                    {subtypeOptions.map((s) => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
+                  <select value={form.subtype} onChange={(e) => setForm({ ...form, subtype: e.target.value as Subtype })} className={inputCls}>
+                    {subtypeOptions.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                   </select>
                 </Field>
               </div>
 
               <Field label="Title *">
-                <input
-                  required value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className={inputCls}
-                  placeholder="e.g. PLC firmware regression testing for Line 4"
-                />
+                <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputCls}
+                  placeholder="e.g. PLC firmware regression testing for Line 4" />
               </Field>
 
               <Field label="Description">
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className={`${inputCls} min-h-[80px]`}
-                  placeholder="Scope, goals, deliverables…"
-                />
+                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  className={`${inputCls} min-h-[80px]`} placeholder="Scope, goals, deliverables…" />
               </Field>
 
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -302,7 +319,7 @@ function EntriesPage() {
             <ClipboardList className="size-8 text-muted-foreground" />
             <div>
               <div className="text-sm font-medium">No entries yet</div>
-              <div className="mt-1 text-xs text-muted-foreground">Create your first Engineering R&D or Development entry — it will be saved to the database and only visible to you.</div>
+              <div className="mt-1 text-xs text-muted-foreground">Create your first Engineering R&D or Development entry.</div>
             </div>
             <button onClick={() => setShowForm(true)} className="mt-2 flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
               <Plus className="size-3.5" /> Create entry
