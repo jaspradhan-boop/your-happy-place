@@ -82,12 +82,16 @@ function AdminPage() {
 
   async function deleteProfile(id: string) {
     if (id === user.id) return toast.error("You cannot delete your own account here.");
-    if (!confirm("Delete this user's profile, roles, and all their entries?")) return;
-    const { error } = await supabase.from("profiles").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Profile deleted (auth user still exists; ask support to fully purge)");
-    load();
+    if (!confirm("Permanently delete this user, their roles, and all their entries? This cannot be undone.")) return;
+    try {
+      await deleteUserFn({ data: { userId: id } });
+      toast.success("User deleted");
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to delete user");
+    }
   }
+
 
   async function handleSignOut() {
     await supabase.auth.signOut();
