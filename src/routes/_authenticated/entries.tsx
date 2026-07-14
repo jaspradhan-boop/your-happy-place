@@ -206,37 +206,42 @@ function EntriesPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1400px] p-6">
-        <div className="flex flex-wrap items-end justify-between gap-4 pb-6">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">Project Entries</h1>
+      <div className="mx-auto max-w-[1400px] p-4 sm:p-6">
+        <div className="flex flex-col gap-3 pb-5 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4 sm:pb-6">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Project Entries</h1>
               {isAdmin && (
                 <span className="inline-flex items-center gap-1 rounded bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
                   <ShieldCheck className="size-3" /> Admin
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Signed in as <span className="text-foreground">{user.email}</span> · {entries.length} entries · {rdCount} R&D · {devCount} Dev/Test/Improvement
-              {isAdmin && " · viewing ALL users' entries"}
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+              <span className="block truncate sm:inline">Signed in as <span className="text-foreground">{user.email}</span></span>
+              <span className="hidden sm:inline"> · </span>
+              <span>{entries.length} entries · {rdCount} R&D · {devCount} Dev/Test</span>
+              {isAdmin && <span className="block text-primary/80 sm:inline"> · viewing ALL users' entries</span>}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowForm((s) => !s)}
-              className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 sm:flex-none sm:py-1.5"
             >
               <Plus className="size-3.5" /> New entry
             </button>
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs hover:bg-accent"
+              className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-xs hover:bg-accent sm:py-1.5"
             >
               <LogOut className="size-3.5" /> Sign out
             </button>
           </div>
         </div>
+
+        {entries.length > 0 && <AnalyticsPanel entries={entries} />}
+
 
         {showForm && (
           <Card className="mb-6 p-5">
