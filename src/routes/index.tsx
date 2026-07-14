@@ -1,16 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { Card, StatTile, SectionHeader, Progress, ProjectStatusBadge, AvatarStack, Sparkline, PriorityBadge } from "@/components/ui-bits";
 import { activity, kpis, members, memberById, projects, tasks } from "@/lib/mock-data";
 import { Activity, AlertTriangle, Bot, Calendar, CheckCircle2, Clock, Sparkles, TrendingUp, Users, Zap, ArrowRight, FileText, MessageSquare, ShieldAlert, UserCheck, GitCommit } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Dashboard — IntelliTeam AI" },
       { name: "description", content: "Real-time overview of projects, tasks, team health, and AI insights across your organization." },
     ],
   }),
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) throw redirect({ to: "/auth" });
+    throw redirect({ to: "/entries" });
+  },
   component: Dashboard,
 });
 
