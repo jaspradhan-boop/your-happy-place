@@ -202,6 +202,7 @@ function AdminPage() {
                 })}
               </tbody>
             </table>
+            </div>
           </Card>
         )}
       </div>
