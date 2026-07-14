@@ -58,6 +58,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Workspace</div>
           {nav.map((item) => {
             if ("adminOnly" in item && item.adminOnly && !isAdmin) return null;
+            const active = "exact" in item && item.exact ? pathname === item.to : pathname.startsWith(item.to) && item.to !== "/";
             const isDash = item.to === "/" && pathname === "/";
             const isActive = active || isDash;
             const Icon = item.icon;
