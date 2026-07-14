@@ -14,7 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      project_entries: {
+        Row: {
+          budget: number | null
+          category: Database["public"]["Enums"]["entry_category"]
+          created_at: string
+          department: string | null
+          description: string | null
+          due_date: string | null
+          estimated_hours: number | null
+          id: string
+          notes: string | null
+          owner: string | null
+          priority: Database["public"]["Enums"]["entry_priority"]
+          start_date: string | null
+          status: Database["public"]["Enums"]["entry_status"]
+          subtype: Database["public"]["Enums"]["entry_subtype"]
+          tags: string[]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget?: number | null
+          category: Database["public"]["Enums"]["entry_category"]
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          notes?: string | null
+          owner?: string | null
+          priority?: Database["public"]["Enums"]["entry_priority"]
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["entry_status"]
+          subtype: Database["public"]["Enums"]["entry_subtype"]
+          tags?: string[]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget?: number | null
+          category?: Database["public"]["Enums"]["entry_category"]
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          notes?: string | null
+          owner?: string | null
+          priority?: Database["public"]["Enums"]["entry_priority"]
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["entry_status"]
+          subtype?: Database["public"]["Enums"]["entry_subtype"]
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +85,22 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      entry_category: "engineering_rd" | "new_dev_test_improvement"
+      entry_priority: "low" | "medium" | "high" | "critical"
+      entry_status:
+        | "planned"
+        | "in_progress"
+        | "on_hold"
+        | "completed"
+        | "cancelled"
+      entry_subtype:
+        | "research"
+        | "prototype"
+        | "feasibility_study"
+        | "design"
+        | "new_development"
+        | "testing"
+        | "improvement"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +227,25 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      entry_category: ["engineering_rd", "new_dev_test_improvement"],
+      entry_priority: ["low", "medium", "high", "critical"],
+      entry_status: [
+        "planned",
+        "in_progress",
+        "on_hold",
+        "completed",
+        "cancelled",
+      ],
+      entry_subtype: [
+        "research",
+        "prototype",
+        "feasibility_study",
+        "design",
+        "new_development",
+        "testing",
+        "improvement",
+      ],
+    },
   },
 } as const
