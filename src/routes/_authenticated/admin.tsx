@@ -35,6 +35,8 @@ type UserRole = { user_id: string; role: "admin" | "member" };
 function AdminPage() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
+  const deleteUserFn = useServerFn(deleteUserCompletely);
+
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
