@@ -87,7 +87,7 @@ function Reports() {
         <div className="mt-8">
           <SectionHeader title="Recently generated" />
           <Card className="mt-3 overflow-hidden">
-            <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-4 border-b border-border bg-muted/40 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="hidden grid-cols-[1fr_auto_auto_auto_auto] items-center gap-4 border-b border-border bg-muted/40 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:grid">
               <span>Report</span><span>Type</span><span>Author</span><span>Generated</span><span></span>
             </div>
             {[
@@ -97,16 +97,19 @@ function Reports() {
               { name: "Team Productivity June", type: "People", who: "AI", when: "5 days ago" },
               { name: "Vendor Alternates — PMC71", type: "Engineering", who: "AI", when: "1 week ago" },
             ].map((r, i) => (
-              <div key={i} className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-4 border-b border-border px-4 py-2.5 text-xs last:border-0">
-                <div className="flex items-center gap-2"><FileText className="size-3.5 text-primary" /><span className="font-medium">{r.name}</span></div>
-                <span className="rounded bg-muted px-1.5 py-px text-[10px] text-muted-foreground">{r.type}</span>
-                <span className="text-muted-foreground">{r.who}</span>
-                <span className="text-muted-foreground">{r.when}</span>
-                <button className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"><Download className="size-3.5" /></button>
+              <div key={i} className="border-b border-border px-3 py-2.5 text-xs last:border-0 sm:grid sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-center sm:gap-4 sm:px-4">
+                <div className="flex items-center gap-2"><FileText className="size-3.5 shrink-0 text-primary" /><span className="truncate font-medium">{r.name}</span></div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground sm:mt-0 sm:contents">
+                  <span className="rounded bg-muted px-1.5 py-px text-[10px]">{r.type}</span>
+                  <span className="text-[10px] sm:text-xs">{r.who}</span>
+                  <span className="text-[10px] sm:text-xs">{r.when}</span>
+                  <button className="ml-auto rounded p-1 hover:bg-accent hover:text-foreground sm:ml-0"><Download className="size-3.5" /></button>
+                </div>
               </div>
             ))}
           </Card>
         </div>
+
       </div>
     </AppShell>
   );
