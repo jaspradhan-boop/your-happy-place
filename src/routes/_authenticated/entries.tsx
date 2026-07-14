@@ -5,6 +5,10 @@ import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui-bits";
 import { Plus, Loader2, Trash2, LogOut, FlaskConical, Rocket, ClipboardList, Sparkles, ShieldCheck, Clock } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ResponsiveContainer, BarChart as RBarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
+  PieChart, Pie, Cell, AreaChart, Area,
+} from "recharts";
 
 export const Route = createFileRoute("/_authenticated/entries")({
   head: () => ({
