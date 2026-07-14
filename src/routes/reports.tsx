@@ -31,23 +31,24 @@ const throughputTrend = [12, 14, 13, 18, 22, 21, 24, 27, 25, 29, 31, 33];
 function Reports() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1400px] p-6">
-        <div className="flex flex-wrap items-end justify-between gap-4 pb-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Reports & Analytics</h1>
-            <p className="mt-1 text-sm text-muted-foreground">AI-generated, audit-ready reports. Export to PDF, Word, Excel, PowerPoint, or CSV.</p>
+      <div className="mx-auto max-w-[1400px] p-4 sm:p-6">
+        <div className="flex flex-col gap-3 pb-5 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4 sm:pb-6">
+          <div className="min-w-0">
+            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Reports & Analytics</h1>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">AI-generated, audit-ready reports. Export to PDF, Word, Excel, PowerPoint, or CSV.</p>
           </div>
-          <div className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs text-primary">
+          <div className="flex items-center gap-2 self-start rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs text-primary">
             <Sparkles className="size-3.5" /> 41 reports generated this month
           </div>
         </div>
 
         {/* Analytics summary */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <AnalyticsCard title="Productivity" value="87%" delta="+4.2%" values={productivityTrend} tone="primary" />
           <AnalyticsCard title="Budget burn" value="72%" delta="of plan" values={budgetTrend} tone="warning" />
           <AnalyticsCard title="Throughput" value="33/wk" delta="+8" values={throughputTrend} tone="success" />
         </div>
+
 
         {/* Report catalog */}
         <div className="mt-6">
