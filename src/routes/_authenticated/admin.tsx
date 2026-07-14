@@ -94,29 +94,29 @@ function AdminPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1200px] p-6">
-        <div className="flex flex-wrap items-end justify-between gap-4 pb-6">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">Admin Console</h1>
+      <div className="mx-auto max-w-[1200px] p-4 sm:p-6">
+        <div className="flex flex-col gap-3 pb-5 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4 sm:pb-6">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Admin Console</h1>
               <span className="inline-flex items-center gap-1 rounded bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
                 <ShieldCheck className="size-3" /> Admin
               </span>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
               Approve or reject signups, grant admin, and manage members.
             </p>
           </div>
-          <button onClick={handleSignOut} className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs hover:bg-accent">
+          <button onClick={handleSignOut} className="flex items-center gap-1.5 self-start rounded-md border border-border bg-card px-2.5 py-1.5 text-xs hover:bg-accent">
             <LogOut className="size-3.5" /> Sign out
           </button>
         </div>
 
-        <div className="mb-4 flex gap-1 rounded-md border border-border bg-card p-1 text-xs w-fit">
-          <button onClick={() => setTab("pending")} className={`rounded px-3 py-1.5 ${tab === "pending" ? "bg-accent text-foreground" : "text-muted-foreground"}`}>
-            Pending approvals ({profiles.filter(p=>p.status==="pending").length})
+        <div className="mb-4 flex w-full gap-1 overflow-x-auto rounded-md border border-border bg-card p-1 text-xs sm:w-fit">
+          <button onClick={() => setTab("pending")} className={`shrink-0 rounded px-3 py-1.5 ${tab === "pending" ? "bg-accent text-foreground" : "text-muted-foreground"}`}>
+            Pending ({profiles.filter(p=>p.status==="pending").length})
           </button>
-          <button onClick={() => setTab("all")} className={`rounded px-3 py-1.5 ${tab === "all" ? "bg-accent text-foreground" : "text-muted-foreground"}`}>
+          <button onClick={() => setTab("all")} className={`shrink-0 rounded px-3 py-1.5 ${tab === "all" ? "bg-accent text-foreground" : "text-muted-foreground"}`}>
             All members ({profiles.length})
           </button>
         </div>
@@ -129,7 +129,9 @@ function AdminPage() {
           </Card>
         ) : (
           <Card className="overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-sm">
+
               <thead className="border-b border-border bg-background/40 text-left text-[11px] uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-4 py-2 font-medium">User</th>
@@ -200,6 +202,7 @@ function AdminPage() {
                 })}
               </tbody>
             </table>
+            </div>
           </Card>
         )}
       </div>

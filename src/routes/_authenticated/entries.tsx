@@ -5,6 +5,10 @@ import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui-bits";
 import { Plus, Loader2, Trash2, LogOut, FlaskConical, Rocket, ClipboardList, Sparkles, ShieldCheck, Clock } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ResponsiveContainer, BarChart as RBarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
+  PieChart, Pie, Cell, AreaChart, Area,
+} from "recharts";
 
 export const Route = createFileRoute("/_authenticated/entries")({
   head: () => ({
@@ -202,37 +206,42 @@ function EntriesPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1400px] p-6">
-        <div className="flex flex-wrap items-end justify-between gap-4 pb-6">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">Project Entries</h1>
+      <div className="mx-auto max-w-[1400px] p-4 sm:p-6">
+        <div className="flex flex-col gap-3 pb-5 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4 sm:pb-6">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Project Entries</h1>
               {isAdmin && (
                 <span className="inline-flex items-center gap-1 rounded bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
                   <ShieldCheck className="size-3" /> Admin
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Signed in as <span className="text-foreground">{user.email}</span> · {entries.length} entries · {rdCount} R&D · {devCount} Dev/Test/Improvement
-              {isAdmin && " · viewing ALL users' entries"}
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+              <span className="block truncate sm:inline">Signed in as <span className="text-foreground">{user.email}</span></span>
+              <span className="hidden sm:inline"> · </span>
+              <span>{entries.length} entries · {rdCount} R&D · {devCount} Dev/Test</span>
+              {isAdmin && <span className="block text-primary/80 sm:inline"> · viewing ALL users' entries</span>}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowForm((s) => !s)}
-              className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 sm:flex-none sm:py-1.5"
             >
               <Plus className="size-3.5" /> New entry
             </button>
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs hover:bg-accent"
+              className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-xs hover:bg-accent sm:py-1.5"
             >
               <LogOut className="size-3.5" /> Sign out
             </button>
           </div>
         </div>
+
+        {entries.length > 0 && <AnalyticsPanel entries={entries} />}
+
 
         {showForm && (
           <Card className="mb-6 p-5">
@@ -391,3 +400,207 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
+
+// ---------------- Analytics ----------------
+
+const STATUS_COLORS: Record<Status, string> = {
+  planned: "oklch(0.65 0.02 260)",
+  in_progress: "oklch(0.72 0.16 265)",
+  on_hold: "oklch(0.78 0.15 78)",
+  completed: "oklch(0.72 0.15 152)",
+  cancelled: "oklch(0.62 0.22 22)",
+};
+
+const PRIORITY_COLORS: Record<Priority, string> = {
+  low: "oklch(0.65 0.02 260)",
+  medium: "oklch(0.72 0.16 265)",
+  high: "oklch(0.78 0.15 78)",
+  critical: "oklch(0.62 0.22 22)",
+};
+
+function AnalyticsPanel({ entries }: { entries: Entry[] }) {
+  const statusData = useMemo(() =>
+    STATUSES.map((s) => ({
+      name: s.label,
+      key: s.value,
+      value: entries.filter((e) => e.status === s.value).length,
+    })).filter((d) => d.value > 0),
+  [entries]);
+
+  const categoryData = useMemo(() => {
+    const rd = entries.filter((e) => e.category === "engineering_rd");
+    const dv = entries.filter((e) => e.category === "new_dev_test_improvement");
+    return [
+      { name: "R&D", entries: rd.length, hours: rd.reduce((s, e) => s + (e.estimated_hours ?? 0), 0), budget: rd.reduce((s, e) => s + (e.budget ?? 0), 0) },
+      { name: "Dev/Test", entries: dv.length, hours: dv.reduce((s, e) => s + (e.estimated_hours ?? 0), 0), budget: dv.reduce((s, e) => s + (e.budget ?? 0), 0) },
+    ];
+  }, [entries]);
+
+  const priorityData = useMemo(() =>
+    PRIORITIES.map((p) => ({
+      name: p.charAt(0).toUpperCase() + p.slice(1),
+      key: p,
+      count: entries.filter((e) => e.priority === p).length,
+    })),
+  [entries]);
+
+  const trendData = useMemo(() => {
+    // Group by day for the last 14 days
+    const days: { label: string; date: string; count: number }[] = [];
+    const now = new Date();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      days.push({
+        label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        date: key,
+        count: entries.filter((e) => e.created_at.slice(0, 10) === key).length,
+      });
+    }
+    return days;
+  }, [entries]);
+
+  const totalHours = entries.reduce((s, e) => s + (e.estimated_hours ?? 0), 0);
+  const totalBudget = entries.reduce((s, e) => s + (e.budget ?? 0), 0);
+  const completed = entries.filter((e) => e.status === "completed").length;
+  const completionPct = entries.length > 0 ? Math.round((completed / entries.length) * 100) : 0;
+
+  return (
+    <div className="mb-6 space-y-3 sm:space-y-4">
+      {/* KPI strip */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+        <Kpi label="Total entries" value={entries.length.toString()} />
+        <Kpi label="Completion" value={`${completionPct}%`} tone="success" />
+        <Kpi label="Est. hours" value={totalHours.toLocaleString()} />
+        <Kpi label="Budget" value={`$${(totalBudget / 1000).toFixed(1)}k`} tone="primary" />
+      </div>
+
+      {/* Charts grid */}
+      <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
+        <ChartCard title="Entries by status" subtitle="Distribution across the portfolio">
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie
+                data={statusData}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={48}
+                outerRadius={78}
+                paddingAngle={2}
+                stroke="hsl(var(--background))"
+                strokeWidth={2}
+              >
+                {statusData.map((d) => (
+                  <Cell key={d.key} fill={STATUS_COLORS[d.key as Status]} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={tooltipStyle}
+                itemStyle={{ color: "hsl(var(--foreground))" }}
+                cursor={false}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          <Legend items={statusData.map((d) => ({ label: d.name, color: STATUS_COLORS[d.key as Status], value: d.value }))} />
+        </ChartCard>
+
+        <ChartCard title="R&D vs Dev/Test" subtitle="Entries, estimated hours">
+          <ResponsiveContainer width="100%" height={220}>
+            <RBarChart data={categoryData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+              <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} width={30} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "hsl(var(--accent))", opacity: 0.4 }} />
+              <Bar dataKey="entries" fill="oklch(0.72 0.16 265)" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="hours" fill="oklch(0.78 0.15 78)" radius={[6, 6, 0, 0]} />
+            </RBarChart>
+          </ResponsiveContainer>
+          <Legend items={[
+            { label: "Entries", color: "oklch(0.72 0.16 265)" },
+            { label: "Est. hours", color: "oklch(0.78 0.15 78)" },
+          ]} />
+        </ChartCard>
+
+        <ChartCard title="Priority mix" subtitle="Count per priority level">
+          <ResponsiveContainer width="100%" height={220}>
+            <RBarChart data={priorityData} layout="vertical" margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+              <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <YAxis dataKey="name" type="category" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} width={64} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "hsl(var(--accent))", opacity: 0.4 }} />
+              <Bar dataKey="count" radius={[0, 6, 6, 0]}>
+                {priorityData.map((d) => (
+                  <Cell key={d.key} fill={PRIORITY_COLORS[d.key as Priority]} />
+                ))}
+              </Bar>
+            </RBarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+
+      <ChartCard title="Entry velocity" subtitle="Entries created per day · last 14 days">
+        <ResponsiveContainer width="100%" height={180}>
+          <AreaChart data={trendData} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="entryGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="oklch(0.72 0.16 265)" stopOpacity={0.5} />
+                <stop offset="100%" stopColor="oklch(0.72 0.16 265)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+            <XAxis dataKey="label" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={20} />
+            <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} width={30} />
+            <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: "hsl(var(--primary))", strokeOpacity: 0.3 }} />
+            <Area type="monotone" dataKey="count" stroke="oklch(0.72 0.16 265)" strokeWidth={2} fill="url(#entryGrad)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </ChartCard>
+    </div>
+  );
+}
+
+const tooltipStyle: React.CSSProperties = {
+  backgroundColor: "hsl(var(--popover))",
+  border: "1px solid hsl(var(--border))",
+  borderRadius: 8,
+  fontSize: 12,
+  padding: "6px 10px",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+};
+
+function Kpi({ label, value, tone }: { label: string; value: string; tone?: "success" | "primary" }) {
+  const toneCls = tone === "success" ? "text-success" : tone === "primary" ? "text-primary" : "text-foreground";
+  return (
+    <div className="rounded-lg border border-border bg-card px-3 py-2.5 sm:px-4 sm:py-3">
+      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`mt-1 text-lg font-semibold tracking-tight sm:text-2xl ${toneCls}`}>{value}</div>
+    </div>
+  );
+}
+
+function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  return (
+    <Card className="p-3 sm:p-4">
+      <div className="mb-2">
+        <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
+        {subtitle && <p className="text-[11px] text-muted-foreground">{subtitle}</p>}
+      </div>
+      {children}
+    </Card>
+  );
+}
+
+function Legend({ items }: { items: { label: string; color: string; value?: number }[] }) {
+  return (
+    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+      {items.map((i) => (
+        <span key={i.label} className="flex items-center gap-1.5">
+          <span className="size-2 rounded-sm" style={{ backgroundColor: i.color }} />
+          {i.label}{i.value !== undefined && <span className="font-mono text-foreground">· {i.value}</span>}
+        </span>
+      ))}
+    </div>
+  );
+}
+
