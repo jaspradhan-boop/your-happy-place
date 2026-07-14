@@ -21,32 +21,33 @@ function ProjectsIndex() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1400px] p-6">
-        <div className="flex flex-wrap items-end justify-between gap-4 pb-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {projects.length} programs · {openTasks} open tasks · ${(totalSpent / 1e6).toFixed(2)}M of ${(totalBudget / 1e6).toFixed(2)}M spent
+      <div className="mx-auto max-w-[1400px] p-4 sm:p-6">
+        <div className="flex flex-col gap-3 pb-5 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4 sm:pb-6">
+          <div className="min-w-0">
+            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Projects</h1>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+              {projects.length} programs · {openTasks} open tasks · ${(totalSpent / 1e6).toFixed(2)}M of ${(totalBudget / 1e6).toFixed(2)}M
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1 rounded-md border border-border bg-card p-1 text-muted-foreground">
               <button className="rounded bg-accent px-2 py-1 text-xs text-foreground"><LayoutGrid className="size-3.5" /></button>
               <button className="px-2 py-1 text-xs hover:text-foreground"><List className="size-3.5" /></button>
               <button className="px-2 py-1 text-xs hover:text-foreground"><Calendar className="size-3.5" /></button>
             </div>
-            <button className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs hover:bg-accent"><Filter className="size-3.5" />Filter</button>
-            <button className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"><Plus className="size-3.5" />New project</button>
+            <button className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs hover:bg-accent"><Filter className="size-3.5" /><span className="hidden sm:inline">Filter</span></button>
+            <button className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 sm:flex-none"><Plus className="size-3.5" /><span className="hidden sm:inline">New project</span><span className="sm:hidden">New</span></button>
           </div>
         </div>
 
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
-          <Search className="size-4 text-muted-foreground" />
-          <input placeholder="Search projects, tags, or ask AI (e.g. 'show all at-risk automation projects due this quarter')" className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none" />
-          <div className="flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary"><Sparkles className="size-3" /> AI</div>
+        <div className="mb-5 flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 sm:mb-6">
+          <Search className="size-4 shrink-0 text-muted-foreground" />
+          <input placeholder="Search projects, tags, or ask AI…" className="min-w-0 flex-1 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none" />
+          <div className="hidden shrink-0 items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary sm:flex"><Sparkles className="size-3" /> AI</div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
+
           {projects.map((p) => {
             const projectTasks = tasks.filter(t => t.projectId === p.id);
             const done = projectTasks.filter(t => t.status === "done").length;
