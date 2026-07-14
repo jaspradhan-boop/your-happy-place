@@ -53,8 +53,9 @@ function AdminPage() {
   }
 
   async function setStatus(id: string, status: "approved" | "rejected" | "pending") {
-    const update: Record<string, unknown> = { status };
-    if (status === "approved") { update.approved_at = new Date().toISOString(); update.approved_by = user.id; }
+    const update = status === "approved"
+      ? { status, approved_at: new Date().toISOString(), approved_by: user.id }
+      : { status, approved_at: null, approved_by: null };
     const { error } = await supabase.from("profiles").update(update).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(`User ${status}`);
