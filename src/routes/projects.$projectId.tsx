@@ -34,7 +34,7 @@ function ProjectDetail() {
   const { project } = Route.useLoaderData();
   const tasks = tasksByProject(project.id);
   const manager = memberById(project.managerId);
-  const teamMembers = project.memberIds.map(id => memberById(id));
+  const teamMembers: Member[] = project.memberIds.map((id: string) => memberById(id));
   const healthTone = project.health >= 80 ? "success" : project.health >= 65 ? "primary" : project.health >= 50 ? "warning" : "destructive";
 
   return (
