@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { channels, memberById, messages, members } from "@/lib/mock-data";
 import { useState } from "react";
-import { Hash, Lock, Search, Send, Sparkles, Plus, AtSign, Paperclip, Smile, Mic, Bot, Pin, Bell } from "lucide-react";
+import { Hash, Search, Send, Sparkles, Plus, AtSign, Paperclip, Smile, Mic, Bot, Pin, Bell, Menu, X } from "lucide-react";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -17,61 +17,83 @@ export const Route = createFileRoute("/chat")({
 function Chat() {
   const [activeId, setActiveId] = useState("c3");
   const [input, setInput] = useState("");
+  const [convOpen, setConvOpen] = useState(false);
   const active = channels.find(c => c.id === activeId)!;
   const channelMessages = messages.filter(m => m.channelId === activeId);
   const projectChannels = channels.filter(c => c.type === "project" || c.type === "channel");
   const dms = channels.filter(c => c.type === "dm");
 
+  const conversationList = (
+    <>
+      <div className="flex items-center justify-between px-4 py-3">
+        <h2 className="text-sm font-semibold">Conversations</h2>
+        <div className="flex items-center gap-1">
+          <button className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"><Plus className="size-3.5" /></button>
+          <button onClick={() => setConvOpen(false)} className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden" aria-label="Close"><X className="size-3.5" /></button>
+        </div>
+      </div>
+      <div className="px-3 pb-2">
+        <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5 text-xs text-muted-foreground">
+          <Search className="size-3.5" /><input placeholder="Search" className="min-w-0 flex-1 bg-transparent placeholder:text-muted-foreground focus:outline-none" />
+        </div>
+      </div>
+      <nav className="flex-1 space-y-0.5 overflow-auto px-2 pb-4 scrollbar-thin">
+        <SectionLabel>Channels</SectionLabel>
+        {projectChannels.map(c => (
+          <ChannelRow key={c.id} channel={c} active={c.id === activeId} onClick={() => { setActiveId(c.id); setConvOpen(false); }} />
+        ))}
+        <SectionLabel>Direct messages</SectionLabel>
+        {dms.map(c => (
+          <ChannelRow key={c.id} channel={c} active={c.id === activeId} onClick={() => { setActiveId(c.id); setConvOpen(false); }} />
+        ))}
+        <SectionLabel>AI</SectionLabel>
+        <button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-accent hover:text-foreground">
+          <Sparkles className="size-3.5 text-primary" /> <span className="flex-1 text-left">IntelliTeam AI</span>
+        </button>
+      </nav>
+    </>
+  );
+
   return (
     <AppShell>
       <div className="flex h-full">
-        {/* Channel list */}
-        <div className="flex w-64 shrink-0 flex-col border-r border-border bg-card/30">
-          <div className="flex items-center justify-between px-4 py-3">
-            <h2 className="text-sm font-semibold">Conversations</h2>
-            <button className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"><Plus className="size-3.5" /></button>
-          </div>
-          <div className="px-3 pb-2">
-            <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5 text-xs text-muted-foreground">
-              <Search className="size-3.5" /><input placeholder="Search" className="flex-1 bg-transparent placeholder:text-muted-foreground focus:outline-none" />
+        {/* Channel list — desktop */}
+        <div className="hidden w-64 shrink-0 flex-col border-r border-border bg-card/30 md:flex">
+          {conversationList}
+        </div>
+
+        {/* Channel list — mobile drawer */}
+        {convOpen && (
+          <div className="fixed inset-0 z-40 md:hidden">
+            <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" onClick={() => setConvOpen(false)} />
+            <div className="absolute inset-y-0 left-0 flex w-[78%] max-w-[280px] flex-col border-r border-border bg-card shadow-2xl">
+              {conversationList}
             </div>
           </div>
-          <nav className="flex-1 space-y-0.5 overflow-auto px-2 pb-4 scrollbar-thin">
-            <SectionLabel>Channels</SectionLabel>
-            {projectChannels.map(c => (
-              <ChannelRow key={c.id} channel={c} active={c.id === activeId} onClick={() => setActiveId(c.id)} />
-            ))}
-            <SectionLabel>Direct messages</SectionLabel>
-            {dms.map(c => (
-              <ChannelRow key={c.id} channel={c} active={c.id === activeId} onClick={() => setActiveId(c.id)} />
-            ))}
-            <SectionLabel>AI</SectionLabel>
-            <button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-accent hover:text-foreground">
-              <Sparkles className="size-3.5 text-primary" /> <span className="flex-1 text-left">IntelliTeam AI</span>
-            </button>
-          </nav>
-        </div>
+        )}
 
         {/* Conversation */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex items-center justify-between border-b border-border px-6 py-3">
-            <div className="flex items-center gap-2">
-              {active.type === "dm" ? <AtSign className="size-4 text-muted-foreground" /> : active.type === "project" ? <Hash className="size-4 text-primary" /> : <Hash className="size-4 text-muted-foreground" />}
-              <div>
-                <div className="text-sm font-semibold">{active.name}</div>
-                <div className="text-[11px] text-muted-foreground">
-                  {active.type === "project" ? "Project channel · 6 members · pinned by 3" : active.type === "dm" ? "Direct message" : "8 members"}
+          <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-3 sm:px-6">
+            <div className="flex min-w-0 items-center gap-2">
+              <button onClick={() => setConvOpen(true)} className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden" aria-label="Conversations"><Menu className="size-4" /></button>
+              {active.type === "dm" ? <AtSign className="size-4 shrink-0 text-muted-foreground" /> : <Hash className="size-4 shrink-0 text-primary" />}
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold">{active.name}</div>
+                <div className="truncate text-[11px] text-muted-foreground">
+                  {active.type === "project" ? "Project channel · 6 members" : active.type === "dm" ? "Direct message" : "8 members"}
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Pin className="size-3.5" /></button>
-              <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Bell className="size-3.5" /></button>
+            <div className="flex shrink-0 items-center gap-1 text-muted-foreground">
+              <button className="hidden rounded p-1.5 hover:bg-accent hover:text-foreground sm:block"><Pin className="size-3.5" /></button>
+              <button className="hidden rounded p-1.5 hover:bg-accent hover:text-foreground sm:block"><Bell className="size-3.5" /></button>
               <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Search className="size-3.5" /></button>
             </div>
           </div>
 
-          <div className="flex-1 space-y-4 overflow-auto scrollbar-thin p-6">
+          <div className="flex-1 space-y-4 overflow-auto scrollbar-thin p-4 sm:p-6">
+
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
               <span className="h-px flex-1 bg-border" /> Today <span className="h-px flex-1 bg-border" />
             </div>

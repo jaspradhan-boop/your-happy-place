@@ -39,35 +39,36 @@ function ProjectDetail() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1500px] p-6">
+      <div className="mx-auto max-w-[1500px] p-4 sm:p-6">
         {/* Header */}
-        <Link to="/projects" className="mb-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+        <Link to="/projects" className="mb-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground sm:mb-4">
           <ArrowLeft className="size-3.5" /> All projects
         </Link>
 
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="flex size-11 items-center justify-center rounded-md bg-primary/10 font-mono text-xs font-semibold text-primary">{project.key}</div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 font-mono text-xs font-semibold text-primary sm:size-11">{project.key}</div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-lg font-semibold tracking-tight sm:text-2xl">{project.name}</h1>
                 <ProjectStatusBadge status={project.status} />
                 <PriorityBadge priority={project.priority} />
               </div>
-              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{project.description}</p>
-              <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+              <p className="mt-1 max-w-2xl text-xs text-muted-foreground sm:text-sm">{project.description}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                 <span className="flex items-center gap-1"><GitBranch className="size-3" /> {project.department}</span>
                 <span className="flex items-center gap-1"><Calendar className="size-3" /> {new Date(project.startDate).toLocaleDateString()} – {new Date(project.dueDate).toLocaleDateString()}</span>
                 <span className="flex items-center gap-1"><DollarSign className="size-3" /> ${(project.spent / 1000).toFixed(0)}k / ${(project.budget / 1000).toFixed(0)}k</span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <AvatarStack items={teamMembers.map(m => ({ initials: m.initials, color: m.avatarColor }))} max={6} />
             <button className="rounded-md border border-border bg-card p-1.5 hover:bg-accent"><MoreHorizontal className="size-4 text-muted-foreground" /></button>
             <button className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"><Plus className="size-3.5" />Add task</button>
           </div>
         </div>
+
 
         {/* Metrics + AI forecast */}
         <div className="mt-6 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_1fr_1fr_1.4fr]">
@@ -101,21 +102,22 @@ function ProjectDetail() {
         </div>
 
         {/* Tabs */}
-        <div className="mt-6 flex items-center gap-1 border-b border-border">
+        <div className="mt-6 flex items-center gap-1 overflow-x-auto border-b border-border scrollbar-thin">
           {["Kanban", "Timeline", "Files", "Discussion", "Activity"].map((t, i) => (
-            <button key={t} className={`relative px-3 py-2 text-xs font-medium transition ${i === 0 ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+            <button key={t} className={`relative shrink-0 px-3 py-2 text-xs font-medium transition ${i === 0 ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
               {t}
               {i === 0 && <span className="absolute inset-x-3 -bottom-px h-0.5 bg-primary" />}
             </button>
           ))}
         </div>
 
-        {/* Kanban */}
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+        {/* Kanban — horizontal scroll on mobile, grid on xl */}
+        <div className="mt-4 -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 scrollbar-thin sm:mx-0 sm:px-0 xl:grid xl:grid-cols-5 xl:overflow-visible">
           {TASK_STATUSES.map((status) => {
             const columnTasks = tasks.filter(t => t.status === status);
             return (
-              <div key={status} className="flex min-h-[400px] flex-col rounded-lg border border-border bg-background/30">
+              <div key={status} className="flex min-h-[400px] w-[85%] shrink-0 snap-start flex-col rounded-lg border border-border bg-background/30 sm:w-72 xl:w-auto">
+
                 <div className="flex items-center justify-between border-b border-border px-3 py-2">
                   <div className="flex items-center gap-2">
                     <span className="size-2 rounded-full" style={{ backgroundColor: taskStatusColor(status) }} />

@@ -47,28 +47,28 @@ function Assistant() {
 
   return (
     <AppShell>
-      <div className="mx-auto flex h-full max-w-5xl flex-col p-6">
-        <div className="flex items-center gap-3 pb-4">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <div className="mx-auto flex h-full max-w-5xl flex-col p-3 sm:p-6">
+        <div className="flex flex-wrap items-center gap-3 pb-3 sm:pb-4">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary sm:size-10">
             <Sparkles className="size-5" />
           </div>
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">IntelliTeam AI Assistant</h1>
-            <p className="text-xs text-muted-foreground">Grounded in your projects, tasks, documents, and meetings. Multilingual, voice-ready, private.</p>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-base font-semibold tracking-tight sm:text-xl">IntelliTeam AI Assistant</h1>
+            <p className="text-[11px] text-muted-foreground sm:text-xs">Grounded in your projects, tasks, documents, and meetings.</p>
           </div>
-          <div className="ml-auto flex items-center gap-2 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-[10px] font-medium text-success">
-            <span className="size-1.5 rounded-full bg-success" /> Connected · 128 sources indexed
+          <div className="flex items-center gap-2 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-[10px] font-medium text-success">
+            <span className="size-1.5 rounded-full bg-success" /> <span className="hidden sm:inline">Connected · 128 sources indexed</span><span className="sm:hidden">Live</span>
           </div>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-auto rounded-xl border border-border bg-card/40 p-6 scrollbar-thin">
+        <div className="flex-1 space-y-4 overflow-auto rounded-xl border border-border bg-card/40 p-3 scrollbar-thin sm:p-6">
           {messages.map((m, i) => (
-            <div key={i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
+            <div key={i} className={`flex gap-2 sm:gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
               {m.role === "ai" && (
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary"><Sparkles className="size-4" /></div>
               )}
-              <div className={`max-w-[75%] space-y-2 ${m.role === "user" ? "order-1" : ""}`}>
-                <div className={`rounded-2xl px-4 py-2.5 text-sm ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
+              <div className={`max-w-[85%] space-y-2 sm:max-w-[75%] ${m.role === "user" ? "order-1" : ""}`}>
+                <div className={`rounded-2xl px-3 py-2 text-sm sm:px-4 sm:py-2.5 ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
                   {m.text}
                 </div>
                 {m.card}
@@ -78,6 +78,7 @@ function Assistant() {
               )}
             </div>
           ))}
+
 
           {messages.length === 1 && (
             <div className="pt-4">
