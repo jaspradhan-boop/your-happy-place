@@ -17,22 +17,23 @@ export const Route = createFileRoute("/team")({
 function Team() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1400px] p-6">
-        <div className="flex flex-wrap items-end justify-between gap-4 pb-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Team</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{members.length} members · {members.filter(m => m.online).length} online now</p>
+      <div className="mx-auto max-w-[1400px] p-4 sm:p-6">
+        <div className="flex flex-col gap-3 pb-5 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4 sm:pb-6">
+          <div className="min-w-0">
+            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Team</h1>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">{members.length} members · {members.filter(m => m.online).length} online now</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5">
-              <Search className="size-3.5 text-muted-foreground" />
-              <input placeholder="Search by name, role, or skill" className="w-64 bg-transparent text-xs placeholder:text-muted-foreground focus:outline-none" />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 sm:flex-none">
+              <Search className="size-3.5 shrink-0 text-muted-foreground" />
+              <input placeholder="Search by name, role, or skill" className="min-w-0 flex-1 bg-transparent text-xs placeholder:text-muted-foreground focus:outline-none sm:w-64" />
             </div>
             <button className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"><UserPlus className="size-3.5" />Invite</button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+
           {members.map(m => {
             const openTasks = tasks.filter(t => t.assigneeId === m.id && t.status !== "done").length;
             const load = Math.min(100, 40 + openTasks * 13);
