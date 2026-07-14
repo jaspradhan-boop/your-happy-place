@@ -16,6 +16,20 @@ const nav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return;
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", userData.user.id);
+      if (!cancelled) setIsAdmin((data ?? []).some((r) => r.role === "admin"));
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
@@ -43,7 +57,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <nav className="mt-4 flex-1 space-y-0.5 px-2">
           <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Workspace</div>
           {nav.map((item) => {
-            const active = "exact" in item && item.exact ? pathname === item.to : pathname.startsWith(item.to) && item.to !== "/";
+            if ("adminOnly" in item && item.adminOnly && !isAdmin) return null;
             const isDash = item.to === "/" && pathname === "/";
             const isActive = active || isDash;
             const Icon = item.icon;
