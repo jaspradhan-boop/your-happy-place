@@ -1,7 +1,8 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { Card, ProjectStatusBadge, PriorityBadge, Progress, AvatarStack, SectionHeader, TaskStatusChip, TASK_STATUSES, taskStatusColor, taskStatusLabel } from "@/components/ui-bits";
-import { memberById, projectById, tasksByProject, members } from "@/lib/mock-data";
+import { Card, ProjectStatusBadge, PriorityBadge, Progress, AvatarStack, SectionHeader, TASK_STATUSES, taskStatusColor, taskStatusLabel } from "@/components/ui-bits";
+import { memberById, projectById, tasksByProject } from "@/lib/mock-data";
+import type { Member } from "@/lib/mock-data";
 import { ArrowLeft, Calendar, DollarSign, MessageSquare, Paperclip, Plus, Sparkles, TrendingUp, ShieldAlert, GitBranch, FileText, MoreHorizontal, Timer } from "lucide-react";
 
 export const Route = createFileRoute("/projects/$projectId")({
