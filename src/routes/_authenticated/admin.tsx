@@ -1,10 +1,13 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui-bits";
 import { Loader2, ShieldCheck, Check, X, Trash2, LogOut, UserCog } from "lucide-react";
 import { toast } from "sonner";
+import { deleteUserCompletely } from "@/lib/admin.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
