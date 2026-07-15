@@ -322,6 +322,7 @@ function Chat() {
 
       {newChatOpen && (
         <NewChatModal
+          members={members}
           onClose={() => setNewChatOpen(false)}
           onCreate={createConversation}
         />
@@ -330,7 +331,7 @@ function Chat() {
   );
 }
 
-function NewChatModal({ onClose, onCreate }: { onClose: () => void; onCreate: (p: { mode: NewChatMode; name: string; memberIds: string[] }) => void }) {
+function NewChatModal({ members, onClose, onCreate }: { members: Member[]; onClose: () => void; onCreate: (p: { mode: NewChatMode; name: string; memberIds: string[] }) => void }) {
   const [mode, setMode] = useState<NewChatMode>("dm");
   const [selected, setSelected] = useState<string[]>([]);
   const [name, setName] = useState("");
