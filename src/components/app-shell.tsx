@@ -240,12 +240,20 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <button className="hidden items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground sm:flex">
-              <Plus className="size-3.5" /> New
-            </button>
-            <button className="relative rounded-md border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground">
+            <Link
+              to="/entries"
+              className="hidden items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground sm:flex"
+              title="Create a new project entry"
+            >
+              <Plus className="size-3.5" /> New entry
+            </Link>
+            <button
+              onClick={() => toast.info("You're all caught up — no new notifications.")}
+              className="relative rounded-md border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground"
+              title="Notifications"
+              aria-label="Notifications"
+            >
               <Bell className="size-4" />
-              <span className="absolute right-1 top-1 size-1.5 rounded-full bg-primary" />
             </button>
           </div>
         </header>
