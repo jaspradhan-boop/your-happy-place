@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { channels as defaultChannels, members, messages as defaultMessages, type ChatChannel, type ChatMessage } from "@/lib/mock-data";
+import { channels as defaultChannels, messages as defaultMessages, type ChatChannel, type ChatMessage, type Member } from "@/lib/mock-data";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Hash, Search, Send, Sparkles, Plus, AtSign, Paperclip, Smile, Mic, Bot, Pin, Bell, Menu, X, Trash2, Users, User as UserIcon, Check } from "lucide-react";
@@ -21,9 +21,19 @@ export const Route = createFileRoute("/chat")({
 
 type NewChatMode = "dm" | "group" | "team";
 
+const AVATAR_COLORS = ["oklch(0.72 0.16 265)", "oklch(0.72 0.15 152)", "oklch(0.78 0.15 78)", "oklch(0.72 0.14 235)", "oklch(0.68 0.2 320)", "oklch(0.72 0.16 25)", "oklch(0.7 0.14 195)", "oklch(0.72 0.14 340)"];
+function hashPick<T>(id: string, arr: T[]): T {
+  let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return arr[Math.abs(h) % arr.length];
+}
+function initialsFrom(name: string) {
+  return name.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map(s => s[0]?.toUpperCase() ?? "").join("") || "?";
+}
+
 function Chat() {
   const [channels, setChannels] = useState<ChatChannel[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [activeId, setActiveId] = useState("");
   const [input, setInput] = useState("");
   const [convOpen, setConvOpen] = useState(false);
@@ -53,10 +63,27 @@ function Chat() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-      if ((data ?? []).some((r) => r.role === "admin")) setIsAdmin(true);
+      const [{ data: roles }, { data: profs }] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
+        supabase.from("profiles").select("id, email, full_name, status").eq("status", "approved"),
+      ]);
+      if ((roles ?? []).some((r) => r.role === "admin")) setIsAdmin(true);
+      const mapped: Member[] = ((profs ?? []) as { id: string; email: string | null; full_name: string | null }[]).map((p) => {
+        const name = p.full_name || p.email || "Member";
+        return {
+          id: p.id,
+          name,
+          role: p.id === user.id ? "You" : "Team member",
+          email: p.email ?? "",
+          avatarColor: hashPick(p.id, AVATAR_COLORS),
+          initials: initialsFrom(name),
+          online: p.id === user.id,
+        };
+      });
+      setMembers(mapped);
     })();
   }, []);
+
 
   const active = channels.find(c => c.id === activeId) ?? channels[0];
   const channelMessages = messages.filter(m => m.channelId === active?.id);
@@ -295,6 +322,7 @@ function Chat() {
 
       {newChatOpen && (
         <NewChatModal
+          members={members}
           onClose={() => setNewChatOpen(false)}
           onCreate={createConversation}
         />
@@ -303,7 +331,7 @@ function Chat() {
   );
 }
 
-function NewChatModal({ onClose, onCreate }: { onClose: () => void; onCreate: (p: { mode: NewChatMode; name: string; memberIds: string[] }) => void }) {
+function NewChatModal({ members, onClose, onCreate }: { members: Member[]; onClose: () => void; onCreate: (p: { mode: NewChatMode; name: string; memberIds: string[] }) => void }) {
   const [mode, setMode] = useState<NewChatMode>("dm");
   const [selected, setSelected] = useState<string[]>([]);
   const [name, setName] = useState("");
@@ -313,7 +341,7 @@ function NewChatModal({ onClose, onCreate }: { onClose: () => void; onCreate: (p
     const q = query.trim().toLowerCase();
     if (!q) return members;
     return members.filter(m => m.name.toLowerCase().includes(q) || m.role.toLowerCase().includes(q));
-  }, [query]);
+  }, [query, members]);
 
   function toggle(id: string) {
     if (mode === "dm") {
