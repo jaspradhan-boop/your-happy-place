@@ -122,7 +122,7 @@ function Assistant() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
               rows={2}
-              placeholder="Ask anything — 'Forecast Helix SCADA', 'Draft an MOM from Tuesday's meeting', 'Find alternate to PMC71'…"
+              placeholder="Ask anything — forecast a project, draft a status update, summarize a meeting, find an alternate part…"
               className="w-full resize-none bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none"
             />
             <div className="flex items-center justify-between border-t border-border px-3 py-2">
