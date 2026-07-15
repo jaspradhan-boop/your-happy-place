@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget_proposals: {
+        Row: {
+          category: Database["public"]["Enums"]["entry_category"]
+          created_at: string
+          department: string | null
+          description: string | null
+          fiscal_year: number
+          hardware_cost: number
+          hardware_notes: string | null
+          id: string
+          justification: string | null
+          priority: Database["public"]["Enums"]["entry_priority"]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_notes: string | null
+          service_cost: number
+          service_notes: string | null
+          software_cost: number
+          software_notes: string | null
+          status: Database["public"]["Enums"]["proposal_status"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["entry_category"]
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          fiscal_year: number
+          hardware_cost?: number
+          hardware_notes?: string | null
+          id?: string
+          justification?: string | null
+          priority?: Database["public"]["Enums"]["entry_priority"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          service_cost?: number
+          service_notes?: string | null
+          software_cost?: number
+          software_notes?: string | null
+          status?: Database["public"]["Enums"]["proposal_status"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["entry_category"]
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          fiscal_year?: number
+          hardware_cost?: number
+          hardware_notes?: string | null
+          id?: string
+          justification?: string | null
+          priority?: Database["public"]["Enums"]["entry_priority"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          service_cost?: number
+          service_notes?: string | null
+          software_cost?: number
+          software_notes?: string | null
+          status?: Database["public"]["Enums"]["proposal_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           approved_at: string | null
@@ -163,6 +235,12 @@ export type Database = {
         | "testing"
         | "improvement"
       profile_status: "pending" | "approved" | "rejected"
+      proposal_status:
+        | "draft"
+        | "submitted"
+        | "under_review"
+        | "approved"
+        | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -310,6 +388,13 @@ export const Constants = {
         "improvement",
       ],
       profile_status: ["pending", "approved", "rejected"],
+      proposal_status: [
+        "draft",
+        "submitted",
+        "under_review",
+        "approved",
+        "rejected",
+      ],
     },
   },
 } as const
