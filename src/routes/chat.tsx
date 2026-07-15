@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { channels as mockChannels, memberById, messages as mockMessages, members, type ChatChannel, type ChatMessage } from "@/lib/mock-data";
-import { useEffect, useState } from "react";
+import { channels as defaultChannels, members, messages as defaultMessages, type ChatChannel, type ChatMessage } from "@/lib/mock-data";
+import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Hash, Search, Send, Sparkles, Plus, AtSign, Paperclip, Smile, Mic, Bot, Pin, Bell, Menu, X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+
+const CHAT_CHANNELS_KEY = "it_chat_channels_v2";
+const CHAT_MESSAGES_KEY = "it_chat_messages_v2";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -17,17 +20,36 @@ export const Route = createFileRoute("/chat")({
 });
 
 function Chat() {
-  const [channels, setChannels] = useState<ChatChannel[]>(mockChannels);
-  const [messages, setMessages] = useState<ChatMessage[]>(mockMessages);
-  const [activeId, setActiveId] = useState("c3");
+  const [channels, setChannels] = useState<ChatChannel[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [activeId, setActiveId] = useState("");
   const [input, setInput] = useState("");
   const [convOpen, setConvOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userId, setUserId] = useState("u1");
+  const [storageReady, setStorageReady] = useState(false);
+
+  useEffect(() => {
+    setChannels(readStored(CHAT_CHANNELS_KEY, defaultChannels));
+    setMessages(readStored(CHAT_MESSAGES_KEY, defaultMessages));
+    setStorageReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!storageReady) return;
+    localStorage.setItem(CHAT_CHANNELS_KEY, JSON.stringify(channels));
+  }, [channels, storageReady]);
+
+  useEffect(() => {
+    if (!storageReady) return;
+    localStorage.setItem(CHAT_MESSAGES_KEY, JSON.stringify(messages));
+  }, [messages, storageReady]);
 
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setUserId(user.id);
       const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
       if ((data ?? []).some((r) => r.role === "admin")) setIsAdmin(true);
     })();
@@ -38,6 +60,16 @@ function Chat() {
   const projectChannels = channels.filter(c => c.type === "project" || c.type === "channel");
   const dms = channels.filter(c => c.type === "dm");
 
+  function createConversation() {
+    if (!isAdmin) return toast.error("Only admins can create conversations.");
+    const name = prompt("Conversation name");
+    if (!name?.trim()) return;
+    const channel: ChatChannel = { id: crypto.randomUUID(), name: name.trim(), type: "channel", unread: 0 };
+    setChannels((prev) => [channel, ...prev]);
+    setActiveId(channel.id);
+    toast.success("Conversation created");
+  }
+
   function deleteConversation(id: string) {
     const ch = channels.find(c => c.id === id);
     if (!ch) return;
@@ -46,7 +78,7 @@ function Chat() {
     setMessages(prev => prev.filter(m => m.channelId !== id));
     if (activeId === id) {
       const next = channels.find(c => c.id !== id);
-      if (next) setActiveId(next.id);
+      setActiveId(next?.id ?? "");
     }
     toast.success("Conversation deleted");
   }
@@ -56,12 +88,26 @@ function Chat() {
     toast.success("Message deleted");
   }
 
+  function sendMessage() {
+    if (!active || !input.trim()) return;
+    const now = new Date();
+    const message: ChatMessage = {
+      id: crypto.randomUUID(),
+      channelId: active.id,
+      authorId: userId,
+      body: input.trim(),
+      timestamp: now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }),
+    };
+    setMessages((prev) => [...prev, message]);
+    setInput("");
+  }
+
   const conversationList = (
     <>
       <div className="flex items-center justify-between px-4 py-3">
         <h2 className="text-sm font-semibold">Conversations</h2>
         <div className="flex items-center gap-1">
-          <button className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"><Plus className="size-3.5" /></button>
+          {isAdmin && <button onClick={createConversation} className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Create conversation"><Plus className="size-3.5" /></button>}
           <button onClick={() => setConvOpen(false)} className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden" aria-label="Close"><X className="size-3.5" /></button>
         </div>
       </div>
@@ -94,7 +140,15 @@ function Chat() {
   if (!active) {
     return (
       <AppShell>
-        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No conversations. Create one to get started.</div>
+        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
+          <Hash className="size-8" />
+          <div>No conversations available. Default generated chats have been removed.</div>
+          {isAdmin && (
+            <button onClick={createConversation} className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+              <Plus className="size-3.5" /> Create conversation
+            </button>
+          )}
+        </div>
       </AppShell>
     );
   }
@@ -148,7 +202,7 @@ function Chat() {
               <span className="h-px flex-1 bg-border" /> Today <span className="h-px flex-1 bg-border" />
             </div>
             {channelMessages.map(m => {
-              const author = memberById(m.authorId);
+              const author = members.find(member => member.id === m.authorId) ?? { name: "You", role: "Workspace member", avatarColor: "oklch(0.72 0.16 265)", initials: "ME" };
               return (
                 <div key={m.id} className="group flex gap-3">
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-background" style={{ backgroundColor: author.avatarColor }}>{author.initials}</div>
@@ -187,7 +241,7 @@ function Chat() {
               );
             })}
 
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+            {channelMessages.length > 0 && <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
               <div className="flex items-center gap-2 text-xs">
                 <Bot className="size-4 text-primary" />
                 <span className="font-semibold text-primary">AI Summary of this conversation</span>
@@ -200,7 +254,7 @@ function Chat() {
                 <button className="rounded border border-border bg-background px-2 py-1 text-[10px] font-medium hover:bg-accent">Draft vendor email</button>
                 <button className="rounded border border-border bg-background px-2 py-1 text-[10px] font-medium hover:bg-accent">Create MOM</button>
               </div>
-            </div>
+            </div>}
           </div>
 
           <div className="border-t border-border p-4">
@@ -220,7 +274,7 @@ function Chat() {
                   <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Mic className="size-3.5" /></button>
                   <button className="flex items-center gap-1 rounded px-1.5 py-1 text-[10px] font-medium text-primary hover:bg-primary/10"><Sparkles className="size-3" /> AI</button>
                 </div>
-                <button className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+                <button onClick={sendMessage} className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
                   Send <Send className="size-3" />
                 </button>
               </div>
@@ -253,8 +307,17 @@ function Chat() {
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function SectionLabel({ children }: { children: ReactNode }) {
   return <div className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{children}</div>;
+}
+
+function readStored<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) as T : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 function ChannelRow({ channel, active, isAdmin, onClick, onDelete }: { channel: ChatChannel; active: boolean; isAdmin: boolean; onClick: () => void; onDelete: () => void }) {
