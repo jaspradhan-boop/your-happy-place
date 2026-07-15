@@ -2,6 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { LayoutDashboard, FolderKanban, MessagesSquare, Sparkles, Users, BarChart3, Bell, Search, Command, Plus, Settings, CircleDot, ClipboardList, ShieldCheck, Menu, X, Wallet, LogOut } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const DEFAULT_NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
