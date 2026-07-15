@@ -146,20 +146,5 @@ function Assistant() {
   );
 }
 
-function ForecastCard() {
-  return (
-    <Card className="overflow-hidden">
-      <div className="border-b border-border bg-primary/5 px-3 py-2">
-        <div className="flex items-center gap-2 text-[11px] font-semibold text-primary"><TrendingUp className="size-3" /> Portfolio forecast — Q3 2026</div>
-      </div>
-      <div className="grid grid-cols-3 divide-x divide-border text-center">
-        <div className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">On track</div><div className="mt-1 font-mono text-lg font-semibold text-success">3</div></div>
-        <div className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">Watch</div><div className="mt-1 font-mono text-lg font-semibold text-warning">1</div></div>
-        <div className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">At risk</div><div className="mt-1 font-mono text-lg font-semibold text-destructive">1</div></div>
-      </div>
-      <div className="border-t border-border p-3 text-xs text-muted-foreground">
-        <div><span className="text-foreground font-medium">Helix SCADA</span> is the primary concern — predicted 20-day slip driven by sensor lead time. Approved alternate identified: <span className="text-foreground">Endress+Hauser PMC71</span>. Reassigning Kenji to OPC UA sizing recovers ~4 days.</div>
-      </div>
-    </Card>
-  );
-}
+
+
