@@ -30,13 +30,8 @@ const defaultCatalog: CatalogItem[] = [
   { id: "qual", icon: Award, tone: "text-success", title: "Quality & compliance", meta: "Monthly · audit-ready", body: "ISO 27001 / GDPR posture with corrective actions.", tags: ["Compliance"] },
 ];
 
-const defaultRecent: RecentItem[] = [
-  { id: "r1", name: "Q2 2026 Executive Summary", type: "Executive", who: "AI", when: "2h ago" },
-  { id: "r2", name: "Helix SCADA — Risk Report", type: "Risk", who: "AI", when: "Yesterday" },
-  { id: "r3", name: "Apex Robotics — Weekly Status", type: "Project", who: "Aarav Mehta", when: "2 days ago" },
-  { id: "r4", name: "Team Productivity June", type: "People", who: "AI", when: "5 days ago" },
-  { id: "r5", name: "Vendor Alternates — PMC71", type: "Engineering", who: "AI", when: "1 week ago" },
-];
+const defaultRecent: RecentItem[] = [];
+
 
 const productivityTrend = [62, 68, 71, 70, 74, 79, 82, 85, 84, 87, 88, 87];
 const budgetTrend = [12, 18, 22, 28, 30, 35, 44, 50, 58, 63, 68, 72];
