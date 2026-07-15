@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { channels as defaultChannels, members, messages as defaultMessages, type ChatChannel, type ChatMessage } from "@/lib/mock-data";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Hash, Search, Send, Sparkles, Plus, AtSign, Paperclip, Smile, Mic, Bot, Pin, Bell, Menu, X, Trash2 } from "lucide-react";
+import { Hash, Search, Send, Sparkles, Plus, AtSign, Paperclip, Smile, Mic, Bot, Pin, Bell, Menu, X, Trash2, Users, User as UserIcon, Check } from "lucide-react";
 import { toast } from "sonner";
 
 const CHAT_CHANNELS_KEY = "it_chat_channels_v2";
@@ -19,6 +19,8 @@ export const Route = createFileRoute("/chat")({
   component: Chat,
 });
 
+type NewChatMode = "dm" | "group" | "team";
+
 function Chat() {
   const [channels, setChannels] = useState<ChatChannel[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -28,6 +30,7 @@ function Chat() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userId, setUserId] = useState("u1");
   const [storageReady, setStorageReady] = useState(false);
+  const [newChatOpen, setNewChatOpen] = useState(false);
 
   useEffect(() => {
     setChannels(readStored(CHAT_CHANNELS_KEY, defaultChannels));
@@ -60,14 +63,18 @@ function Chat() {
   const projectChannels = channels.filter(c => c.type === "project" || c.type === "channel");
   const dms = channels.filter(c => c.type === "dm");
 
-  function createConversation() {
-    if (!isAdmin) return toast.error("Only admins can create conversations.");
-    const name = prompt("Conversation name");
-    if (!name?.trim()) return;
-    const channel: ChatChannel = { id: crypto.randomUUID(), name: name.trim(), type: "channel", unread: 0 };
+  function createConversation(payload: { mode: NewChatMode; name: string; memberIds: string[] }) {
+    const channel: ChatChannel = {
+      id: crypto.randomUUID(),
+      name: payload.name,
+      type: payload.mode === "dm" ? "dm" : "channel",
+      unread: 0,
+      memberIds: payload.mode === "team" ? members.map(m => m.id) : payload.memberIds,
+    };
     setChannels((prev) => [channel, ...prev]);
     setActiveId(channel.id);
-    toast.success("Conversation created");
+    setNewChatOpen(false);
+    toast.success(payload.mode === "dm" ? "Direct message started" : payload.mode === "team" ? "Team channel created" : "Group chat created");
   }
 
   function deleteConversation(id: string) {
@@ -107,7 +114,7 @@ function Chat() {
       <div className="flex items-center justify-between px-4 py-3">
         <h2 className="text-sm font-semibold">Conversations</h2>
         <div className="flex items-center gap-1">
-          {isAdmin && <button onClick={createConversation} className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Create conversation"><Plus className="size-3.5" /></button>}
+          <button onClick={() => setNewChatOpen(true)} className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="New chat" title="New chat"><Plus className="size-3.5" /></button>
           <button onClick={() => setConvOpen(false)} className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden" aria-label="Close"><X className="size-3.5" /></button>
         </div>
       </div>
@@ -118,12 +125,14 @@ function Chat() {
       </div>
       <nav className="flex-1 space-y-0.5 overflow-auto px-2 pb-4 scrollbar-thin">
         <SectionLabel>Channels</SectionLabel>
+        {projectChannels.length === 0 && <EmptyHint>No channels yet</EmptyHint>}
         {projectChannels.map(c => (
           <ChannelRow key={c.id} channel={c} active={c.id === activeId} isAdmin={isAdmin}
             onClick={() => { setActiveId(c.id); setConvOpen(false); }}
             onDelete={() => deleteConversation(c.id)} />
         ))}
         <SectionLabel>Direct messages</SectionLabel>
+        {dms.length === 0 && <EmptyHint>No direct messages yet</EmptyHint>}
         {dms.map(c => (
           <ChannelRow key={c.id} channel={c} active={c.id === activeId} isAdmin={isAdmin}
             onClick={() => { setActiveId(c.id); setConvOpen(false); }}
@@ -136,22 +145,6 @@ function Chat() {
       </nav>
     </>
   );
-
-  if (!active) {
-    return (
-      <AppShell>
-        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
-          <Hash className="size-8" />
-          <div>No conversations available. Default generated chats have been removed.</div>
-          {isAdmin && (
-            <button onClick={createConversation} className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
-              <Plus className="size-3.5" /> Create conversation
-            </button>
-          )}
-        </div>
-      </AppShell>
-    );
-  }
 
   return (
     <AppShell>
@@ -170,116 +163,105 @@ function Chat() {
         )}
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-3 sm:px-6">
-            <div className="flex min-w-0 items-center gap-2">
-              <button onClick={() => setConvOpen(true)} className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden" aria-label="Conversations"><Menu className="size-4" /></button>
-              {active.type === "dm" ? <AtSign className="size-4 shrink-0 text-muted-foreground" /> : <Hash className="size-4 shrink-0 text-primary" />}
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold">{active.name}</div>
-                <div className="truncate text-[11px] text-muted-foreground">
-                  {active.type === "project" ? "Project channel · 6 members" : active.type === "dm" ? "Direct message" : "8 members"}
-                </div>
-              </div>
+          {!active ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
+              <Hash className="size-8" />
+              <div>No conversations yet. Start a new chat to talk with your team.</div>
+              <button onClick={() => setNewChatOpen(true)} className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+                <Plus className="size-3.5" /> New chat
+              </button>
             </div>
-            <div className="flex shrink-0 items-center gap-1 text-muted-foreground">
-              <button className="hidden rounded p-1.5 hover:bg-accent hover:text-foreground sm:block"><Pin className="size-3.5" /></button>
-              <button className="hidden rounded p-1.5 hover:bg-accent hover:text-foreground sm:block"><Bell className="size-3.5" /></button>
-              <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Search className="size-3.5" /></button>
-              {isAdmin && (
-                <button
-                  onClick={() => deleteConversation(active.id)}
-                  className="flex items-center gap-1 rounded border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] font-medium text-destructive hover:bg-destructive/20"
-                  title="Delete conversation (admin)"
-                >
-                  <Trash2 className="size-3" /> Delete
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex-1 space-y-4 overflow-auto scrollbar-thin p-4 sm:p-6">
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-              <span className="h-px flex-1 bg-border" /> Today <span className="h-px flex-1 bg-border" />
-            </div>
-            {channelMessages.map(m => {
-              const author = members.find(member => member.id === m.authorId) ?? { name: "You", role: "Workspace member", avatarColor: "oklch(0.72 0.16 265)", initials: "ME" };
-              return (
-                <div key={m.id} className="group flex gap-3">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-background" style={{ backgroundColor: author.avatarColor }}>{author.initials}</div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-semibold">{author.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{author.role}</span>
-                      <span className="text-[10px] text-muted-foreground">{m.timestamp}</span>
-                      {isAdmin && (
-                        <button
-                          onClick={() => deleteMessage(m.id)}
-                          className="ml-auto flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-destructive opacity-0 hover:bg-destructive/10 group-hover:opacity-100"
-                          title="Delete message (admin)"
-                        >
-                          <Trash2 className="size-3" />
-                        </button>
-                      )}
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-3 sm:px-6">
+                <div className="flex min-w-0 items-center gap-2">
+                  <button onClick={() => setConvOpen(true)} className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden" aria-label="Conversations"><Menu className="size-4" /></button>
+                  {active.type === "dm" ? <AtSign className="size-4 shrink-0 text-muted-foreground" /> : <Hash className="size-4 shrink-0 text-primary" />}
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold">{active.name}</div>
+                    <div className="truncate text-[11px] text-muted-foreground">
+                      {active.type === "dm" ? "Direct message" : `${(active.memberIds?.length ?? members.length)} members`}
                     </div>
-                    <p className="mt-0.5 text-sm leading-relaxed">{m.body}</p>
-                    {m.aiTagged && (
-                      <div className="mt-1.5 inline-flex items-center gap-1 rounded border border-primary/30 bg-primary/5 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                        <Sparkles className="size-2.5" /> AI actioned
-                      </div>
-                    )}
-                    {m.reactions && (
-                      <div className="mt-1.5 flex gap-1">
-                        {m.reactions.map((r, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-1.5 py-0.5 text-[10px]">
-                            <span>{r.emoji}</span><span className="text-muted-foreground">{r.count}</span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
-              );
-            })}
-
-            {channelMessages.length > 0 && <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-              <div className="flex items-center gap-2 text-xs">
-                <Bot className="size-4 text-primary" />
-                <span className="font-semibold text-primary">AI Summary of this conversation</span>
-              </div>
-              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                Team is aligned on FAT protocol reuse from ZPH (saves ~2 days). Panel wiring at station 3 blocked by cable trays — escalated to supply chain. Aarav requested an AI-drafted vendor email.
-              </p>
-              <div className="mt-2 flex gap-1.5">
-                <button className="rounded bg-primary/15 px-2 py-1 text-[10px] font-medium text-primary hover:bg-primary/25">Generate action items</button>
-                <button className="rounded border border-border bg-background px-2 py-1 text-[10px] font-medium hover:bg-accent">Draft vendor email</button>
-                <button className="rounded border border-border bg-background px-2 py-1 text-[10px] font-medium hover:bg-accent">Create MOM</button>
-              </div>
-            </div>}
-          </div>
-
-          <div className="border-t border-border p-4">
-            <div className="rounded-lg border border-border bg-card focus-within:border-primary/50">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={`Message #${active.name} or type / for AI commands`}
-                rows={2}
-                className="w-full resize-none bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none"
-              />
-              <div className="flex items-center justify-between border-t border-border px-2 py-1.5">
-                <div className="flex items-center gap-0.5 text-muted-foreground">
-                  <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Paperclip className="size-3.5" /></button>
-                  <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><AtSign className="size-3.5" /></button>
-                  <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Smile className="size-3.5" /></button>
-                  <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Mic className="size-3.5" /></button>
-                  <button className="flex items-center gap-1 rounded px-1.5 py-1 text-[10px] font-medium text-primary hover:bg-primary/10"><Sparkles className="size-3" /> AI</button>
+                <div className="flex shrink-0 items-center gap-1 text-muted-foreground">
+                  <button className="hidden rounded p-1.5 hover:bg-accent hover:text-foreground sm:block"><Pin className="size-3.5" /></button>
+                  <button className="hidden rounded p-1.5 hover:bg-accent hover:text-foreground sm:block"><Bell className="size-3.5" /></button>
+                  <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Search className="size-3.5" /></button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => deleteConversation(active.id)}
+                      className="flex items-center gap-1 rounded border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] font-medium text-destructive hover:bg-destructive/20"
+                      title="Delete conversation (admin)"
+                    >
+                      <Trash2 className="size-3" /> Delete
+                    </button>
+                  )}
                 </div>
-                <button onClick={sendMessage} className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
-                  Send <Send className="size-3" />
-                </button>
               </div>
-            </div>
-          </div>
+
+              <div className="flex-1 space-y-4 overflow-auto scrollbar-thin p-4 sm:p-6">
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span className="h-px flex-1 bg-border" /> Today <span className="h-px flex-1 bg-border" />
+                </div>
+                {channelMessages.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+                    No messages yet. Say hi 👋
+                  </div>
+                )}
+                {channelMessages.map(m => {
+                  const author = members.find(member => member.id === m.authorId) ?? { name: "You", role: "Workspace member", avatarColor: "oklch(0.72 0.16 265)", initials: "ME" };
+                  return (
+                    <div key={m.id} className="group flex gap-3">
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-background" style={{ backgroundColor: author.avatarColor }}>{author.initials}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-semibold">{author.name}</span>
+                          <span className="text-[10px] text-muted-foreground">{author.role}</span>
+                          <span className="text-[10px] text-muted-foreground">{m.timestamp}</span>
+                          {isAdmin && (
+                            <button
+                              onClick={() => deleteMessage(m.id)}
+                              className="ml-auto flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-destructive opacity-0 hover:bg-destructive/10 group-hover:opacity-100"
+                              title="Delete message (admin)"
+                            >
+                              <Trash2 className="size-3" />
+                            </button>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-sm leading-relaxed">{m.body}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="border-t border-border p-4">
+                <div className="rounded-lg border border-border bg-card focus-within:border-primary/50">
+                  <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                    placeholder={`Message ${active.type === "dm" ? "@" : "#"}${active.name}`}
+                    rows={2}
+                    className="w-full resize-none bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none"
+                  />
+                  <div className="flex items-center justify-between border-t border-border px-2 py-1.5">
+                    <div className="flex items-center gap-0.5 text-muted-foreground">
+                      <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Paperclip className="size-3.5" /></button>
+                      <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><AtSign className="size-3.5" /></button>
+                      <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Smile className="size-3.5" /></button>
+                      <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Mic className="size-3.5" /></button>
+                      <button className="flex items-center gap-1 rounded px-1.5 py-1 text-[10px] font-medium text-primary hover:bg-primary/10"><Sparkles className="size-3" /> AI</button>
+                    </div>
+                    <button onClick={sendMessage} className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+                      Send <Send className="size-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <aside className="hidden w-60 shrink-0 flex-col border-l border-border bg-card/30 xl:flex">
@@ -294,21 +276,163 @@ function Chat() {
                   <div className="flex size-7 items-center justify-center rounded-full text-[10px] font-semibold text-background" style={{ backgroundColor: m.avatarColor }}>{m.initials}</div>
                   <span className={`absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-2 ring-card ${m.online ? "bg-success" : "bg-muted"}`} />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="truncate text-xs font-medium">{m.name}</div>
                   <div className="truncate text-[10px] text-muted-foreground">{m.role}</div>
                 </div>
+                <button
+                  onClick={() => createConversation({ mode: "dm", name: m.name, memberIds: [m.id] })}
+                  className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                  title={`Message ${m.name}`}
+                >
+                  <Send className="size-3" />
+                </button>
               </li>
             ))}
           </ul>
         </aside>
       </div>
+
+      {newChatOpen && (
+        <NewChatModal
+          onClose={() => setNewChatOpen(false)}
+          onCreate={createConversation}
+        />
+      )}
     </AppShell>
+  );
+}
+
+function NewChatModal({ onClose, onCreate }: { onClose: () => void; onCreate: (p: { mode: NewChatMode; name: string; memberIds: string[] }) => void }) {
+  const [mode, setMode] = useState<NewChatMode>("dm");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [name, setName] = useState("");
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return members;
+    return members.filter(m => m.name.toLowerCase().includes(q) || m.role.toLowerCase().includes(q));
+  }, [query]);
+
+  function toggle(id: string) {
+    if (mode === "dm") {
+      setSelected([id]);
+    } else {
+      setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    }
+  }
+
+  function submit() {
+    if (mode === "team") {
+      onCreate({ mode, name: name.trim() || "Full Team", memberIds: members.map(m => m.id) });
+      return;
+    }
+    if (selected.length === 0) {
+      toast.error(mode === "dm" ? "Select a person to message." : "Select at least one member.");
+      return;
+    }
+    if (mode === "dm") {
+      const m = members.find(x => x.id === selected[0])!;
+      onCreate({ mode, name: m.name, memberIds: [m.id] });
+      return;
+    }
+    const label = name.trim() || selected.map(id => members.find(m => m.id === id)?.name.split(" ")[0]).filter(Boolean).join(", ");
+    onCreate({ mode, name: label || "Group chat", memberIds: selected });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative flex w-full max-w-md flex-col overflow-hidden rounded-lg border border-border bg-card shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="text-sm font-semibold">New chat</div>
+          <button onClick={onClose} className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"><X className="size-4" /></button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 border-b border-border p-3">
+          <ModeButton icon={<UserIcon className="size-3.5" />} label="Direct" active={mode === "dm"} onClick={() => { setMode("dm"); setSelected([]); }} />
+          <ModeButton icon={<Users className="size-3.5" />} label="Group" active={mode === "group"} onClick={() => { setMode("group"); setSelected([]); }} />
+          <ModeButton icon={<Hash className="size-3.5" />} label="Full team" active={mode === "team"} onClick={() => { setMode("team"); setSelected(members.map(m => m.id)); }} />
+        </div>
+
+        {(mode === "group" || mode === "team") && (
+          <div className="border-b border-border px-3 py-2">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={mode === "team" ? "Channel name (default: Full Team)" : "Group name (optional)"}
+              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs focus:border-primary/50 focus:outline-none"
+            />
+          </div>
+        )}
+
+        {mode !== "team" && (
+          <>
+            <div className="border-b border-border px-3 py-2">
+              <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5 text-xs text-muted-foreground">
+                <Search className="size-3.5" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search team members" className="min-w-0 flex-1 bg-transparent placeholder:text-muted-foreground focus:outline-none" />
+              </div>
+              <div className="mt-1.5 text-[10px] text-muted-foreground">
+                {mode === "dm" ? "Pick one person to message." : `${selected.length} selected`}
+              </div>
+            </div>
+            <ul className="max-h-72 flex-1 overflow-auto scrollbar-thin">
+              {filtered.map(m => {
+                const on = selected.includes(m.id);
+                return (
+                  <li key={m.id}>
+                    <button onClick={() => toggle(m.id)} className={`flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-accent/60 ${on ? "bg-accent/40" : ""}`}>
+                      <div className="flex size-7 items-center justify-center rounded-full text-[10px] font-semibold text-background" style={{ backgroundColor: m.avatarColor }}>{m.initials}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-xs font-medium">{m.name}</div>
+                        <div className="truncate text-[10px] text-muted-foreground">{m.role}</div>
+                      </div>
+                      <span className={`flex size-4 items-center justify-center rounded border ${on ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
+                        {on && <Check className="size-3" />}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+              {filtered.length === 0 && <li className="px-3 py-6 text-center text-xs text-muted-foreground">No members match “{query}”.</li>}
+            </ul>
+          </>
+        )}
+
+        {mode === "team" && (
+          <div className="px-4 py-6 text-center text-xs text-muted-foreground">
+            This creates a channel with all {members.length} workspace members.
+          </div>
+        )}
+
+        <div className="flex items-center justify-end gap-2 border-t border-border p-3">
+          <button onClick={onClose} className="rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-accent">Cancel</button>
+          <button onClick={submit} className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+            <Plus className="size-3" /> Start chat
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModeButton({ icon, label, active, onClick }: { icon: ReactNode; label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className={`flex flex-col items-center gap-1 rounded-md border px-2 py-2 text-[11px] font-medium transition ${active ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground"}`}>
+      {icon}
+      {label}
+    </button>
   );
 }
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return <div className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{children}</div>;
+}
+
+function EmptyHint({ children }: { children: ReactNode }) {
+  return <div className="px-2 py-1 text-[11px] italic text-muted-foreground/70">{children}</div>;
 }
 
 function readStored<T>(key: string, fallback: T): T {
