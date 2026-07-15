@@ -19,6 +19,7 @@ import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
 import { Route as ProjectsProjectIdRouteImport } from './routes/projects.$projectId'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedEntriesRouteImport } from './routes/_authenticated/entries'
+import { Route as AuthenticatedBudgetRouteImport } from './routes/_authenticated/budget'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 
 const ReportsRoute = ReportsRouteImport.update({
@@ -70,6 +71,11 @@ const AuthenticatedEntriesRoute = AuthenticatedEntriesRouteImport.update({
   path: '/entries',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBudgetRoute = AuthenticatedBudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/chat': typeof ChatRoute
   '/reports': typeof ReportsRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/budget': typeof AuthenticatedBudgetRoute
   '/entries': typeof AuthenticatedEntriesRoute
   '/team': typeof AuthenticatedTeamRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/chat': typeof ChatRoute
   '/reports': typeof ReportsRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/budget': typeof AuthenticatedBudgetRoute
   '/entries': typeof AuthenticatedEntriesRoute
   '/team': typeof AuthenticatedTeamRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/chat': typeof ChatRoute
   '/reports': typeof ReportsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/budget': typeof AuthenticatedBudgetRoute
   '/_authenticated/entries': typeof AuthenticatedEntriesRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/reports'
     | '/admin'
+    | '/budget'
     | '/entries'
     | '/team'
     | '/projects/$projectId'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/reports'
     | '/admin'
+    | '/budget'
     | '/entries'
     | '/team'
     | '/projects/$projectId'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/reports'
     | '/_authenticated/admin'
+    | '/_authenticated/budget'
     | '/_authenticated/entries'
     | '/_authenticated/team'
     | '/projects/$projectId'
@@ -237,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEntriesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/budget': {
+      id: '/_authenticated/budget'
+      path: '/budget'
+      fullPath: '/budget'
+      preLoaderRoute: typeof AuthenticatedBudgetRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -249,12 +268,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedBudgetRoute: typeof AuthenticatedBudgetRoute
   AuthenticatedEntriesRoute: typeof AuthenticatedEntriesRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedBudgetRoute: AuthenticatedBudgetRoute,
   AuthenticatedEntriesRoute: AuthenticatedEntriesRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
 }

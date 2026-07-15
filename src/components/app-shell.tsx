@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, FolderKanban, MessagesSquare, Sparkles, Users, BarChart3, Bell, Search, Command, Plus, Settings, CircleDot, ClipboardList, ShieldCheck, Menu, X } from "lucide-react";
+import { LayoutDashboard, FolderKanban, MessagesSquare, Sparkles, Users, BarChart3, Bell, Search, Command, Plus, Settings, CircleDot, ClipboardList, ShieldCheck, Menu, X, Wallet } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/entries", label: "Entries", icon: ClipboardList },
+  { to: "/budget", label: "Budget", icon: Wallet },
   { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/chat", label: "Team Chat", icon: MessagesSquare, badge: 18 },
