@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { Card } from "@/components/ui-bits";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles, Send, Mic, Paperclip, FileText, TrendingUp, Bot, Search, ShieldAlert, Users, Lightbulb, Zap, User } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
 
 export const Route = createFileRoute("/assistant")({
   head: () => ({
