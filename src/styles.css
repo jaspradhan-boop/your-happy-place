@@ -104,3 +104,15 @@
 @utility glow {
   box-shadow: 0 0 0 1px var(--color-border), 0 20px 40px -20px oklch(0.72 0.16 265 / 0.35);
 }
+
+/* Hide the Lovable badge without affecting layout */
+#lovable-badge,
+a[href*="lovable.dev"][href*="badge"],
+a[href*="lovable.dev/?utm"],
+[data-lovable-badge] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
