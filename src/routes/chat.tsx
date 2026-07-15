@@ -341,7 +341,7 @@ function NewChatModal({ members, onClose, onCreate }: { members: Member[]; onClo
     const q = query.trim().toLowerCase();
     if (!q) return members;
     return members.filter(m => m.name.toLowerCase().includes(q) || m.role.toLowerCase().includes(q));
-  }, [query]);
+  }, [query, members]);
 
   function toggle(id: string) {
     if (mode === "dm") {
