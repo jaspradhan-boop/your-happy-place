@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { channels as defaultChannels, members, messages as defaultMessages, type ChatChannel, type ChatMessage } from "@/lib/mock-data";
+import { channels as defaultChannels, messages as defaultMessages, type ChatChannel, type ChatMessage, type Member } from "@/lib/mock-data";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Hash, Search, Send, Sparkles, Plus, AtSign, Paperclip, Smile, Mic, Bot, Pin, Bell, Menu, X, Trash2, Users, User as UserIcon, Check } from "lucide-react";
