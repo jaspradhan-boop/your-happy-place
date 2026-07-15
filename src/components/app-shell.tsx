@@ -15,12 +15,7 @@ const DEFAULT_NAV = [
   { to: "/reports", label: "Reports", icon: BarChart3 },
 ] as const;
 
-const DEFAULT_PINS = [
-  { key: "APX", name: "Apex Robotics", id: "p1", color: "oklch(0.72 0.16 265)" },
-  { key: "HVX", name: "Helix SCADA", id: "p2", color: "oklch(0.62 0.22 22)" },
-  { key: "NVA", name: "Nova Packaging", id: "p3", color: "oklch(0.72 0.15 152)" },
-  { key: "ORN", name: "Orion Substation", id: "p4", color: "oklch(0.78 0.15 78)" },
-];
+const DEFAULT_PINS: { key: string; name: string; id: string; color: string }[] = [];
 
 const HIDDEN_NAV_KEY = "it_hidden_nav";
 const HIDDEN_PINS_KEY = "it_hidden_pins";
