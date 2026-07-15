@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { channels, memberById, messages, members } from "@/lib/mock-data";
-import { useState } from "react";
-import { Hash, Search, Send, Sparkles, Plus, AtSign, Paperclip, Smile, Mic, Bot, Pin, Bell, Menu, X } from "lucide-react";
+import { channels as mockChannels, memberById, messages as mockMessages, members, type ChatChannel, type ChatMessage } from "@/lib/mock-data";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Hash, Search, Send, Sparkles, Plus, AtSign, Paperclip, Smile, Mic, Bot, Pin, Bell, Menu, X, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -15,13 +17,44 @@ export const Route = createFileRoute("/chat")({
 });
 
 function Chat() {
+  const [channels, setChannels] = useState<ChatChannel[]>(mockChannels);
+  const [messages, setMessages] = useState<ChatMessage[]>(mockMessages);
   const [activeId, setActiveId] = useState("c3");
   const [input, setInput] = useState("");
   const [convOpen, setConvOpen] = useState(false);
-  const active = channels.find(c => c.id === activeId)!;
-  const channelMessages = messages.filter(m => m.channelId === activeId);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+      if ((data ?? []).some((r) => r.role === "admin")) setIsAdmin(true);
+    })();
+  }, []);
+
+  const active = channels.find(c => c.id === activeId) ?? channels[0];
+  const channelMessages = messages.filter(m => m.channelId === active?.id);
   const projectChannels = channels.filter(c => c.type === "project" || c.type === "channel");
   const dms = channels.filter(c => c.type === "dm");
+
+  function deleteConversation(id: string) {
+    const ch = channels.find(c => c.id === id);
+    if (!ch) return;
+    if (!confirm(`Delete conversation "${ch.name}"? All its messages will be removed.`)) return;
+    setChannels(prev => prev.filter(c => c.id !== id));
+    setMessages(prev => prev.filter(m => m.channelId !== id));
+    if (activeId === id) {
+      const next = channels.find(c => c.id !== id);
+      if (next) setActiveId(next.id);
+    }
+    toast.success("Conversation deleted");
+  }
+
+  function deleteMessage(id: string) {
+    setMessages(prev => prev.filter(m => m.id !== id));
+    toast.success("Message deleted");
+  }
 
   const conversationList = (
     <>
@@ -40,11 +73,15 @@ function Chat() {
       <nav className="flex-1 space-y-0.5 overflow-auto px-2 pb-4 scrollbar-thin">
         <SectionLabel>Channels</SectionLabel>
         {projectChannels.map(c => (
-          <ChannelRow key={c.id} channel={c} active={c.id === activeId} onClick={() => { setActiveId(c.id); setConvOpen(false); }} />
+          <ChannelRow key={c.id} channel={c} active={c.id === activeId} isAdmin={isAdmin}
+            onClick={() => { setActiveId(c.id); setConvOpen(false); }}
+            onDelete={() => deleteConversation(c.id)} />
         ))}
         <SectionLabel>Direct messages</SectionLabel>
         {dms.map(c => (
-          <ChannelRow key={c.id} channel={c} active={c.id === activeId} onClick={() => { setActiveId(c.id); setConvOpen(false); }} />
+          <ChannelRow key={c.id} channel={c} active={c.id === activeId} isAdmin={isAdmin}
+            onClick={() => { setActiveId(c.id); setConvOpen(false); }}
+            onDelete={() => deleteConversation(c.id)} />
         ))}
         <SectionLabel>AI</SectionLabel>
         <button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-accent hover:text-foreground">
@@ -54,15 +91,21 @@ function Chat() {
     </>
   );
 
+  if (!active) {
+    return (
+      <AppShell>
+        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No conversations. Create one to get started.</div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="flex h-full">
-        {/* Channel list — desktop */}
         <div className="hidden w-64 shrink-0 flex-col border-r border-border bg-card/30 md:flex">
           {conversationList}
         </div>
 
-        {/* Channel list — mobile drawer */}
         {convOpen && (
           <div className="fixed inset-0 z-40 md:hidden">
             <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" onClick={() => setConvOpen(false)} />
@@ -72,7 +115,6 @@ function Chat() {
           </div>
         )}
 
-        {/* Conversation */}
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-3 sm:px-6">
             <div className="flex min-w-0 items-center gap-2">
@@ -89,11 +131,19 @@ function Chat() {
               <button className="hidden rounded p-1.5 hover:bg-accent hover:text-foreground sm:block"><Pin className="size-3.5" /></button>
               <button className="hidden rounded p-1.5 hover:bg-accent hover:text-foreground sm:block"><Bell className="size-3.5" /></button>
               <button className="rounded p-1.5 hover:bg-accent hover:text-foreground"><Search className="size-3.5" /></button>
+              {isAdmin && (
+                <button
+                  onClick={() => deleteConversation(active.id)}
+                  className="flex items-center gap-1 rounded border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] font-medium text-destructive hover:bg-destructive/20"
+                  title="Delete conversation (admin)"
+                >
+                  <Trash2 className="size-3" /> Delete
+                </button>
+              )}
             </div>
           </div>
 
           <div className="flex-1 space-y-4 overflow-auto scrollbar-thin p-4 sm:p-6">
-
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
               <span className="h-px flex-1 bg-border" /> Today <span className="h-px flex-1 bg-border" />
             </div>
@@ -107,6 +157,15 @@ function Chat() {
                       <span className="text-sm font-semibold">{author.name}</span>
                       <span className="text-[10px] text-muted-foreground">{author.role}</span>
                       <span className="text-[10px] text-muted-foreground">{m.timestamp}</span>
+                      {isAdmin && (
+                        <button
+                          onClick={() => deleteMessage(m.id)}
+                          className="ml-auto flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-destructive opacity-0 hover:bg-destructive/10 group-hover:opacity-100"
+                          title="Delete message (admin)"
+                        >
+                          <Trash2 className="size-3" />
+                        </button>
+                      )}
                     </div>
                     <p className="mt-0.5 text-sm leading-relaxed">{m.body}</p>
                     {m.aiTagged && (
@@ -128,7 +187,6 @@ function Chat() {
               );
             })}
 
-            {/* AI summary block */}
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
               <div className="flex items-center gap-2 text-xs">
                 <Bot className="size-4 text-primary" />
@@ -170,7 +228,6 @@ function Chat() {
           </div>
         </div>
 
-        {/* Right panel — members */}
         <aside className="hidden w-60 shrink-0 flex-col border-l border-border bg-card/30 xl:flex">
           <div className="border-b border-border px-4 py-3">
             <div className="text-sm font-semibold">Members</div>
@@ -200,16 +257,24 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <div className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{children}</div>;
 }
 
-function ChannelRow({ channel, active, onClick }: { channel: typeof channels[number]; active: boolean; onClick: () => void }) {
-  const Icon = channel.type === "dm" ? AtSign : channel.type === "project" ? Hash : Hash;
+function ChannelRow({ channel, active, isAdmin, onClick, onDelete }: { channel: ChatChannel; active: boolean; isAdmin: boolean; onClick: () => void; onDelete: () => void }) {
+  const Icon = channel.type === "dm" ? AtSign : Hash;
   return (
-    <button
-      onClick={onClick}
-      className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition ${active ? "bg-accent text-foreground" : "text-sidebar-foreground/80 hover:bg-accent/60 hover:text-foreground"}`}
-    >
-      <Icon className={`size-3.5 ${active ? "text-primary" : "text-muted-foreground"}`} />
-      <span className="flex-1 truncate text-left">{channel.name}</span>
-      {channel.unread > 0 && <span className="rounded bg-primary/20 px-1.5 py-px text-[10px] font-semibold text-primary">{channel.unread}</span>}
-    </button>
+    <div className={`group flex items-center gap-1 rounded-md pr-1 ${active ? "bg-accent text-foreground" : "text-sidebar-foreground/80 hover:bg-accent/60 hover:text-foreground"}`}>
+      <button onClick={onClick} className="flex min-w-0 flex-1 items-center gap-2 px-2 py-1.5 text-sm">
+        <Icon className={`size-3.5 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} />
+        <span className="flex-1 truncate text-left">{channel.name}</span>
+        {channel.unread > 0 && <span className="rounded bg-primary/20 px-1.5 py-px text-[10px] font-semibold text-primary">{channel.unread}</span>}
+      </button>
+      {isAdmin && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="shrink-0 rounded p-1 text-muted-foreground opacity-0 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+          title="Delete conversation (admin)"
+        >
+          <Trash2 className="size-3" />
+        </button>
+      )}
+    </div>
   );
 }
