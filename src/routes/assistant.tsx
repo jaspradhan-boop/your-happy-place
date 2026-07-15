@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { Card } from "@/components/ui-bits";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles, Send, Mic, Paperclip, FileText, TrendingUp, Bot, Search, ShieldAlert, Users, Lightbulb, Zap, User } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
 
 export const Route = createFileRoute("/assistant")({
   head: () => ({
@@ -26,24 +27,36 @@ const suggestions = [
 ];
 
 function Assistant() {
-  const [messages, setMessages] = useState<Msg[]>([
-    { role: "ai", text: "Hi Aarav — I've been reviewing your workspace. Ready when you are. Try one of the shortcuts below or ask me anything." },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
+  const [greeting, setGreeting] = useState("Hi — ready when you are. Try one of the shortcuts below or ask me anything.");
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const user = data.user;
+      if (!user) return;
+      const { data: profile } = await supabase.from("profiles").select("full_name, email").eq("id", user.id).maybeSingle();
+      const first = (profile?.full_name || profile?.email || "").split(/[@\s]/)[0];
+      const name = first ? first.charAt(0).toUpperCase() + first.slice(1) : "there";
+      setGreeting(`Hi ${name} — ready when you are. Try one of the shortcuts below or ask me anything.`);
+    })();
+  }, []);
+
+  const displayed: Msg[] = messages.length === 0
+    ? [{ role: "ai", text: greeting }]
+    : messages;
 
   function send(q: string) {
     if (!q.trim()) return;
     setMessages(prev => [
       ...prev,
       { role: "user", text: q },
-      {
-        role: "ai",
-        text: "Here's what I found across your workspace, cross-referenced with 12 documents, 4 meeting transcripts, and current vendor data.",
-        card: <ForecastCard />,
-      },
+      { role: "ai", text: "Thanks — I'll get to work on that. Connect your project data and documents so I can ground responses in your workspace." },
     ]);
     setInput("");
   }
+
 
   return (
     <AppShell>
@@ -62,7 +75,7 @@ function Assistant() {
         </div>
 
         <div className="flex-1 space-y-4 overflow-auto rounded-xl border border-border bg-card/40 p-3 scrollbar-thin sm:p-6">
-          {messages.map((m, i) => (
+          {displayed.map((m, i) => (
             <div key={i} className={`flex gap-2 sm:gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
               {m.role === "ai" && (
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary"><Sparkles className="size-4" /></div>
@@ -80,7 +93,8 @@ function Assistant() {
           ))}
 
 
-          {messages.length === 1 && (
+          {messages.length === 0 && (
+
             <div className="pt-4">
               <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Try one of these</div>
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
@@ -108,7 +122,7 @@ function Assistant() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
               rows={2}
-              placeholder="Ask anything — 'Forecast Helix SCADA', 'Draft an MOM from Tuesday's meeting', 'Find alternate to PMC71'…"
+              placeholder="Ask anything — forecast a project, draft a status update, summarize a meeting, find an alternate part…"
               className="w-full resize-none bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none"
             />
             <div className="flex items-center justify-between border-t border-border px-3 py-2">
@@ -132,20 +146,5 @@ function Assistant() {
   );
 }
 
-function ForecastCard() {
-  return (
-    <Card className="overflow-hidden">
-      <div className="border-b border-border bg-primary/5 px-3 py-2">
-        <div className="flex items-center gap-2 text-[11px] font-semibold text-primary"><TrendingUp className="size-3" /> Portfolio forecast — Q3 2026</div>
-      </div>
-      <div className="grid grid-cols-3 divide-x divide-border text-center">
-        <div className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">On track</div><div className="mt-1 font-mono text-lg font-semibold text-success">3</div></div>
-        <div className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">Watch</div><div className="mt-1 font-mono text-lg font-semibold text-warning">1</div></div>
-        <div className="p-3"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">At risk</div><div className="mt-1 font-mono text-lg font-semibold text-destructive">1</div></div>
-      </div>
-      <div className="border-t border-border p-3 text-xs text-muted-foreground">
-        <div><span className="text-foreground font-medium">Helix SCADA</span> is the primary concern — predicted 20-day slip driven by sensor lead time. Approved alternate identified: <span className="text-foreground">Endress+Hauser PMC71</span>. Reassigning Kenji to OPC UA sizing recovers ~4 days.</div>
-      </div>
-    </Card>
-  );
-}
+
+
