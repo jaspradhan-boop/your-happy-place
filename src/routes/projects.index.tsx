@@ -167,7 +167,6 @@ function ProjectsIndex() {
     setSaving(true);
 
     const payload = {
-      user_id: userId,
       title: form.title.trim(),
       description: form.description.trim() || null,
       category: form.category,
@@ -186,7 +185,7 @@ function ProjectsIndex() {
 
     const result = editingId
       ? await supabase.from("project_entries").update(payload).eq("id", editingId)
-      : await supabase.from("project_entries").insert(payload);
+      : await supabase.from("project_entries").insert({ ...payload, user_id: userId });
 
     setSaving(false);
     if (result.error) return toast.error(result.error.message);
