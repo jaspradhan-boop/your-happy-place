@@ -27,24 +27,36 @@ const suggestions = [
 ];
 
 function Assistant() {
-  const [messages, setMessages] = useState<Msg[]>([
-    { role: "ai", text: "Hi Aarav — I've been reviewing your workspace. Ready when you are. Try one of the shortcuts below or ask me anything." },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
+  const [greeting, setGreeting] = useState("Hi — ready when you are. Try one of the shortcuts below or ask me anything.");
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const user = data.user;
+      if (!user) return;
+      const { data: profile } = await supabase.from("profiles").select("full_name, email").eq("id", user.id).maybeSingle();
+      const first = (profile?.full_name || profile?.email || "").split(/[@\s]/)[0];
+      const name = first ? first.charAt(0).toUpperCase() + first.slice(1) : "there";
+      setGreeting(`Hi ${name} — ready when you are. Try one of the shortcuts below or ask me anything.`);
+    })();
+  }, []);
+
+  const displayed: Msg[] = messages.length === 0
+    ? [{ role: "ai", text: greeting }]
+    : messages;
 
   function send(q: string) {
     if (!q.trim()) return;
     setMessages(prev => [
       ...prev,
       { role: "user", text: q },
-      {
-        role: "ai",
-        text: "Here's what I found across your workspace, cross-referenced with 12 documents, 4 meeting transcripts, and current vendor data.",
-        card: <ForecastCard />,
-      },
+      { role: "ai", text: "Thanks — I'll get to work on that. Connect your project data and documents so I can ground responses in your workspace." },
     ]);
     setInput("");
   }
+
 
   return (
     <AppShell>
