@@ -75,7 +75,7 @@ function Assistant() {
         </div>
 
         <div className="flex-1 space-y-4 overflow-auto rounded-xl border border-border bg-card/40 p-3 scrollbar-thin sm:p-6">
-          {messages.map((m, i) => (
+          {displayed.map((m, i) => (
             <div key={i} className={`flex gap-2 sm:gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
               {m.role === "ai" && (
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary"><Sparkles className="size-4" /></div>
@@ -93,7 +93,8 @@ function Assistant() {
           ))}
 
 
-          {messages.length === 1 && (
+          {messages.length === 0 && (
+
             <div className="pt-4">
               <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Try one of these</div>
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
