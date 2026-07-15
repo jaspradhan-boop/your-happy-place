@@ -183,6 +183,7 @@ function Breadcrumbs({ pathname }: { pathname: string }) {
   const map: Record<string, string> = {
     "/": "Dashboard",
     "/entries": "Entries",
+    "/budget": "Budget",
     "/admin": "Admin",
     "/projects": "Projects",
     "/chat": "Team Chat",
